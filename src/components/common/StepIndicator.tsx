@@ -9,7 +9,7 @@ export const StepIndicator: React.FC = () => {
   const steps = [
     { number: 1, title: 'Scan Batch', icon: Camera, desc: 'Image & Input' },
     { number: 2, title: 'AI Recovery Profile', icon: Eye, desc: 'Material & Contamination' },
-    { number: 3, title: 'Scrap Valuation', icon: DollarSign, desc: 'Indicative Yield' },
+    { number: 3, title: 'Value & Optimize', icon: DollarSign, desc: 'Yield & What-If Modeling' },
     { number: 4, title: 'Best Recovery Route', icon: Truck, desc: 'Recycler Matching' },
   ];
 

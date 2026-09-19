@@ -4,6 +4,7 @@ import { aiVisionService } from '../services/ai-vision.service.ts';
 import { fallbackService } from '../services/fallback.service.ts';
 import { valuationService } from '../services/valuation.service.ts';
 import { matchingService } from '../services/matching.service.ts';
+import { optimizationService } from '../services/optimization.service.ts';
 import presetsData from '../data/preset-scans.json';
 import { ScanAnalysisResponse, RecoveryProfile } from '../../src/types/recyclens.types.ts';
 
@@ -138,6 +139,14 @@ export class ScanController {
         composition: fullProfile.composition,
       });
 
+      // 5. Recovery Optimization & What-If Intelligence (Phase 4)
+      const optimization = optimizationService.generateOptimizationIntelligence({
+        profile: fullProfile,
+        valuation,
+        effectiveWeightKg: effectiveWeight,
+        isUserSpecifiedWeight,
+      });
+
       const responsePayload: ScanAnalysisResponse = {
         scan_id: scanId,
         image_url: image || (presetsData.find((p) => p.id === preset_id)?.image_url ?? ''),
@@ -147,6 +156,8 @@ export class ScanController {
         eligible_matches: matchResults.eligibleMatches,
         incompatible_matches: matchResults.incompatibleMatches,
         split_routes: matchResults.splitRoutes,
+        optimization_scenarios: optimization.scenarios,
+        optimization_comparison: optimization.comparison,
         telemetry: {
           processing_time_ms: Date.now() - startTime,
           ai_engine: aiEngine,

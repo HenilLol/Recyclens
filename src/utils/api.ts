@@ -58,7 +58,17 @@ export async function recalculateMatch(payload: {
   contamination_percentage: number;
   quality_grade: string;
   location?: { lat: number; lng: number };
-}): Promise<{ valuation: any; matches: any[]; eligible_matches: any[]; incompatible_matches: any[]; split_routes?: any[] }> {
+  composition?: any[];
+  recovery_profile?: any;
+}): Promise<{
+  valuation: any;
+  matches: any[];
+  eligible_matches: any[];
+  incompatible_matches: any[];
+  split_routes?: any[];
+  optimization_scenarios?: any[];
+  optimization_comparison?: any;
+}> {
   const res = await fetch(`${API_BASE}/match/calculate`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },

@@ -18,14 +18,14 @@ const MATERIAL_OPTIONS = [
 export const HITLVerifyModal: React.FC = () => {
   const { isHITLModalOpen, closeHITLModal, analysisResult, submitFeedback } = useRecyclensStore();
 
-  const [selectedMaterial, setSelectedMaterial] = useState<string>(
+  const [selectedMaterial, setSelectedMaterial] = useState(
     analysisResult?.recovery_profile.primary_material.code || 'PLASTIC_PET'
   );
-  const [measuredWeight, setMeasuredWeight] = useState<string>(
-    analysisResult?.valuation.batch_weight_kg.toString() || '15.0'
-  );
-  const [realizedRate, setRealizedRate] = useState<string>('');
-  const [notes, setNotes] = useState<string>('');
+  const [measuredWeight, setMeasuredWeight] = useState('');
+  const [realizedRate, setRealizedRate] = useState('');
+  const [prepStatus, setPrepStatus] = useState<'NOT_PREPARED' | 'PARTIALLY_PREPARED' | 'FULLY_PREPARED'>('NOT_PREPARED');
+  const [observedContam, setObservedContam] = useState('');
+  const [notes, setNotes] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitted, setSubmitted] = useState(false);
 
@@ -36,12 +36,28 @@ export const HITLVerifyModal: React.FC = () => {
     setIsSubmitting(true);
 
     try {
+      const weightNum = measuredWeight ? parseFloat(measuredWeight) : analysisResult.valuation.batch_weight_kg;
+      let contamNum = analysisResult.recovery_profile.contamination.percentage;
+
+      if (observedContam) {
+        contamNum = Math.max(0, Math.min(100, parseFloat(observedContam)));
+      } else if (prepStatus === 'FULLY_PREPARED') {
+        contamNum = Math.max(2, Math.round(contamNum * 0.35 * 10) / 10);
+      } else if (prepStatus === 'PARTIALLY_PREPARED') {
+        contamNum = Math.max(2, Math.round(contamNum * 0.65 * 10) / 10);
+      }
+
       await submitFeedback({
         corrected_material_code: selectedMaterial,
         actual_measured_weight_kg: measuredWeight ? parseFloat(measuredWeight) : undefined,
         actual_realized_rate: realizedRate ? parseFloat(realizedRate) : undefined,
+        preparation_completed_status: prepStatus,
+        operator_observed_contamination_percent: observedContam ? parseFloat(observedContam) : undefined,
         user_notes: notes,
       });
+
+      // Instantly trigger dynamic store recalculation with user-confirmed values
+      await useRecyclensStore.getState().recalculateWithCustomInputs(weightNum, contamNum, selectedMaterial);
 
       setSubmitted(true);
       setTimeout(() => {
@@ -125,6 +141,39 @@ export const HITLVerifyModal: React.FC = () => {
                 onChange={(e) => setMeasuredWeight(e.target.value)}
                 placeholder="e.g. 14.8"
                 className="w-full px-3 py-2 rounded-xl bg-slate-900 border border-slate-700 text-xs text-slate-200 focus:border-cyan-500 focus:outline-none"
+              />
+            </div>
+
+            {/* Field 3: Operator Preparation Status */}
+            <div>
+              <label className="block text-xs font-mono font-semibold text-slate-300 mb-1">
+                Batch Preparation Intervention Status
+              </label>
+              <select
+                value={prepStatus}
+                onChange={(e) => setPrepStatus(e.target.value as any)}
+                className="w-full px-3 py-2 rounded-xl bg-slate-900 border border-slate-700 text-xs text-slate-200 focus:border-emerald-500 focus:outline-none"
+              >
+                <option value="NOT_PREPARED">As-Received (No Pre-Treatment Performed)</option>
+                <option value="PARTIALLY_PREPARED">Partially Prepared (Drainage / Coarse Debris Removed)</option>
+                <option value="FULLY_PREPARED">Fully Prepared (Separation & Clean Wash Completed)</option>
+              </select>
+            </div>
+
+            {/* Field 4: Operator-Observed Contamination */}
+            <div>
+              <label className="block text-xs font-mono font-semibold text-slate-300 mb-1">
+                Operator-Observed Contamination (%) [Optional Override]
+              </label>
+              <input
+                type="number"
+                step="1"
+                min="0"
+                max="100"
+                value={observedContam}
+                onChange={(e) => setObservedContam(e.target.value)}
+                placeholder={`Current AI estimate: ${analysisResult.recovery_profile.contamination.percentage}%`}
+                className="w-full px-3 py-2 rounded-xl bg-slate-900 border border-slate-700 text-xs text-slate-200 focus:border-emerald-500 focus:outline-none"
               />
             </div>
 

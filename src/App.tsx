@@ -20,6 +20,7 @@ import { HITLVerifyModal } from './components/profile/HITLVerifyModal.tsx';
 
 // Screen 3 Components
 import { ValuationCard } from './components/valuation/ValuationCard.tsx';
+import { RecoveryOptimizationSection } from './components/optimization/RecoveryOptimizationSection.tsx';
 
 // Screen 4 Components
 import { RecyclerList } from './components/routing/RecyclerList.tsx';
@@ -162,10 +163,11 @@ export const App: React.FC = () => {
           </div>
         )}
 
-        {/* SCREEN 3: VALUE (SCRAP YIELD ESTIMATOR) */}
+        {/* SCREEN 3: VALUE (SCRAP YIELD ESTIMATOR) & RECOVERY OPTIMIZATION */}
         {currentStep === 3 && analysisResult && (
           <div className="space-y-6 animate-fade-in">
             <ValuationCard />
+            <RecoveryOptimizationSection />
 
             {/* Navigation Footer */}
             <div className="p-4 rounded-2xl hud-glass border border-slate-800 flex items-center justify-between">

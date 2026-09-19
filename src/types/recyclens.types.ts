@@ -214,6 +214,110 @@ export interface RecyclerMatch {
   warnings?: string[];
 }
 
+export type DataOrigin = 'OBSERVED' | 'MODEL_ESTIMATED' | 'USER_CONFIRMED' | 'SCENARIO_PROJECTED';
+
+export type ScenarioType = 'MINIMAL_PREPARATION' | 'RECOMMENDED_PREPARATION' | 'MAXIMUM_SEPARATION';
+
+export type EffortLevel = 'LOW' | 'MEDIUM' | 'HIGH';
+
+export type RoutingEffectStrategy =
+  | 'NO_ROUTE_CHANGE'
+  | 'SINGLE_FACILITY_PREFERRED'
+  | 'SPLIT_ROUTING_RECOMMENDED'
+  | 'SPECIALIZED_DISPOSAL_REQUIRED';
+
+export interface PreparationActionEvidence {
+  action_id: string;
+  title: string;
+  observed_basis: string; // What visual feature or indicator was detected
+  rationale: string; // Engineering justification for why action improves recovery
+  scenario_assumption: string; // Explicit modeled condition (e.g. "Assumes visible liquid residue is successfully drained")
+  modeled_effect: string; // Projected quantifiable outcome
+  uncertainty: string; // Factual limitations & what remains unmeasured
+  affected_material_codes: string[];
+}
+
+export interface ScenarioCurrentStateReference {
+  data_origin: 'OBSERVED' | 'MODEL_ESTIMATED' | 'USER_CONFIRMED';
+  contamination_percentage: number;
+  recoverability_score: number;
+  recoverability_grade: QualityGrade;
+  indicative_net_range: {
+    min: number;
+    max: number;
+  };
+  weight_kg: number;
+  weight_basis: 'ILLUSTRATIVE_VISUAL_PROJECTION' | 'USER_CONFIRMED_SCALE_WEIGHMENT';
+}
+
+export interface ScenarioModeledState {
+  data_origin: 'SCENARIO_PROJECTED';
+  projected_contamination_percentage: number; // e.g. ~4.0%
+  projected_recoverability_score: number; // e.g. ~92.0
+  projected_recoverability_grade: QualityGrade; // e.g. GRADE_A
+  projected_clean_benchmark: number;
+  projected_contamination_penalty: number;
+  projected_indicative_net_range: {
+    min: number;
+    max: number;
+  };
+  projected_component_valuations?: ComponentValuation[];
+}
+
+export interface ScenarioModelingCoefficients {
+  contamination_reduction_coefficient: number; // Relative reduction factor (e.g. 0.65)
+  recoverability_headroom_coefficient: number; // Headroom capture factor (e.g. 0.55)
+  coefficient_basis: 'ILLUSTRATIVE_SCENARIO_ASSUMPTION';
+  contamination_floor: number; // Floor bound to prevent false-zero claims (2.0%)
+  recoverability_ceiling: number; // Ceiling bound to prevent false-perfection claims (98.0)
+  action_suppression_heuristic: number; // Heuristic threshold below which generic decontamination is suppressed (5.0%)
+}
+
+export interface OptimizationScenario {
+  scenario_id: string;
+  scenario_type: ScenarioType;
+  title: string;
+  description: string;
+  effort_level: EffortLevel;
+  actions: PreparationActionEvidence[];
+  affected_material_codes: string[];
+  modeling_coefficients: ScenarioModelingCoefficients;
+  current_state_reference: ScenarioCurrentStateReference;
+  modeled_state: ScenarioModeledState;
+  assumptions: string[];
+  uncertainties: string[];
+  evidence_basis: string[];
+  economic_effect: string;
+  routing_effect: {
+    strategy: RoutingEffectStrategy;
+    rationale: string;
+  };
+  is_scenario_projection: true;
+  is_fallback_demo?: boolean;
+}
+
+export interface ScenarioMetricComparison {
+  metric: string;
+  current_value_label: string;
+  minimal_value_label?: string;
+  recommended_value_label?: string;
+  maximum_value_label?: string;
+  unit?: string;
+  interpretation: string;
+}
+
+export interface OptimizationComparison {
+  current_state_summary: {
+    data_origin: 'OBSERVED' | 'MODEL_ESTIMATED' | 'USER_CONFIRMED';
+    contamination_label: string;
+    recoverability_label: string;
+    net_realization_label: string;
+    routing_label: string;
+  };
+  comparisons: ScenarioMetricComparison[];
+  modeling_disclosure: string;
+}
+
 export interface ScanAnalysisResponse {
   scan_id: string;
   image_url: string;
@@ -223,6 +327,8 @@ export interface ScanAnalysisResponse {
   eligible_matches: RecyclerMatch[];
   incompatible_matches: RecyclerMatch[];
   split_routes?: SplitRouteRecommendation[]; // Multi-material split route routing
+  optimization_scenarios?: OptimizationScenario[]; // Phase 4 deterministic what-if scenarios
+  optimization_comparison?: OptimizationComparison; // Phase 4 scenario comparison matrix
   telemetry: {
     processing_time_ms: number;
     ai_engine: string;
@@ -252,6 +358,8 @@ export interface FeedbackSubmission {
   corrected_material_code?: string;
   actual_measured_weight_kg?: number;
   actual_realized_rate?: number;
+  preparation_completed_status?: 'NOT_PREPARED' | 'PARTIALLY_PREPARED' | 'FULLY_PREPARED';
+  operator_observed_contamination_percent?: number;
   user_notes?: string;
   contact_email?: string;
 }

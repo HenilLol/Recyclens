@@ -7,6 +7,8 @@ const feedbackSchema = z.object({
   corrected_material_code: z.string().max(50).optional(),
   actual_measured_weight_kg: z.number().min(0.1).max(10000).optional(),
   actual_realized_rate: z.number().min(0).max(10000).optional(),
+  preparation_completed_status: z.enum(['NOT_PREPARED', 'PARTIALLY_PREPARED', 'FULLY_PREPARED']).optional(),
+  operator_observed_contamination_percent: z.number().min(0).max(100).optional(),
   user_notes: z.string().max(1000).optional(),
   contact_email: z.string().email().max(100).optional(),
 });
@@ -25,7 +27,16 @@ export class FeedbackController {
     }
 
     try {
-      const { scan_id, corrected_material_code, actual_measured_weight_kg, actual_realized_rate, user_notes, contact_email } = validation.data;
+      const {
+        scan_id,
+        corrected_material_code,
+        actual_measured_weight_kg,
+        actual_realized_rate,
+        preparation_completed_status,
+        operator_observed_contamination_percent,
+        user_notes,
+        contact_email,
+      } = validation.data;
 
       const entry = {
         id: `fb-${Date.now()}`,
@@ -33,6 +44,8 @@ export class FeedbackController {
         corrected_material_code,
         actual_measured_weight_kg,
         actual_realized_rate,
+        preparation_completed_status,
+        operator_observed_contamination_percent,
         user_notes,
         contact_email,
         timestamp: new Date().toISOString(),

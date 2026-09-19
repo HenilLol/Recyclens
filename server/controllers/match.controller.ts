@@ -2,6 +2,8 @@ import { Request, Response } from 'express';
 import { z } from 'zod';
 import { valuationService } from '../services/valuation.service.ts';
 import { matchingService } from '../services/matching.service.ts';
+import { optimizationService } from '../services/optimization.service.ts';
+import { RecoveryProfile } from '../../src/types/recyclens.types.ts';
 
 const matchCalculateSchema = z.object({
   material_code: z.string().min(1).max(50),
@@ -15,6 +17,8 @@ const matchCalculateSchema = z.object({
       label: z.string().max(200).optional(),
     })
     .optional(),
+  composition: z.array(z.any()).optional(),
+  recovery_profile: z.any().optional(),
 });
 
 export class MatchController {
@@ -28,7 +32,15 @@ export class MatchController {
     }
 
     try {
-      const { material_code, weight_kg, contamination_percentage, quality_grade, location } = validation.data;
+      const {
+        material_code,
+        weight_kg,
+        contamination_percentage,
+        quality_grade,
+        location,
+        composition,
+        recovery_profile,
+      } = validation.data;
 
       const effectiveWeight = typeof weight_kg === 'number' && weight_kg > 0 ? weight_kg : 10.0;
       const contam = typeof contamination_percentage === 'number' ? contamination_percentage : 10.0;
@@ -40,6 +52,8 @@ export class MatchController {
         contaminationPercentage: contam,
         qualityGrade: grade,
         isUserSpecifiedWeight: true,
+        composition: composition || recovery_profile?.composition,
+        unresolvedSharePercent: recovery_profile?.unresolved_fraction?.estimated_share_percent,
       });
 
       const userLoc = location && typeof location.lat === 'number'
@@ -52,7 +66,31 @@ export class MatchController {
         contaminationPercentage: contam,
         userLocation: userLoc,
         valuation,
+        composition: composition || recovery_profile?.composition,
       });
+
+      let optimization = undefined;
+      if (recovery_profile) {
+        const updatedProfile: RecoveryProfile = {
+          ...recovery_profile,
+          contamination: {
+            ...recovery_profile.contamination,
+            percentage: contam,
+          },
+          recoverability: {
+            ...recovery_profile.recoverability,
+            grade,
+          },
+        };
+
+        optimization = optimizationService.generateOptimizationIntelligence({
+          profile: updatedProfile,
+          valuation,
+          effectiveWeightKg: effectiveWeight,
+          isUserSpecifiedWeight: true,
+          userConfirmedContamination: contam,
+        });
+      }
 
       return res.json({
         valuation,
@@ -60,6 +98,8 @@ export class MatchController {
         eligible_matches: matchResults.eligibleMatches,
         incompatible_matches: matchResults.incompatibleMatches,
         split_routes: matchResults.splitRoutes,
+        optimization_scenarios: optimization?.scenarios,
+        optimization_comparison: optimization?.comparison,
       });
     } catch (err: any) {
       return res.status(500).json({ error: 'Failed to recalculate matches.' });

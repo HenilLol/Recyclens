@@ -224,7 +224,7 @@ export class FallbackService {
         },
         uncertainty: [
           'Specific alloying element ratio (Alloy 3004 body vs 5182 lid) is estimated based on UBC standards',
-          'Total batch weighment must be confirmed on certified industrial platform scales',
+          'Total batch weighment must be confirmed on operator platform scale weighment',
         ],
         recommended_preparation: [
           'Bale or crush cans to minimize shipping freight volume',
@@ -339,7 +339,7 @@ export class FallbackService {
           score: 89.0,
           grade: 'GRADE_A',
           is_commercially_viable: true,
-          actionable_advice: 'Dismantle large aluminum heat sinks and batteries before shipping to certified e-waste refiner.',
+          actionable_advice: 'Dismantle large aluminum heat sinks and batteries before shipping to authorized e-waste refiner.',
           potential_applications: ['Hydrometallurgical Au/Ag/Cu recovery', 'Precious metal refining', 'Fiberglass aggregate'],
         },
         uncertainty: [

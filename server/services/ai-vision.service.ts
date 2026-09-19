@@ -16,10 +16,10 @@ Your mission is to inspect visual images of post-consumer or commercial recyclab
 CORE OPERATIONAL PRINCIPLES:
 1. MULTI-MATERIAL BATCH RECOVERY EVIDENCE CHAIN:
    IMAGE/BATCH → COMPOSITION BREAKDOWN → CONTAMINATION EVIDENCE → RECOVERABILITY ASSESSMENT → UNCERTAINTY / LIMITATIONS → PREPARATION / RECOVERY ROUTE
-2. MULTI-MATERIAL COMPOSITION IDENTIFICATION & ANTI-HALLUCINATION:
-   - ONLY identify multiple material components when they are CLEARLY and UNAMBIGUOUSLY VISIBLE as distinct physical objects or components in the provided image.
-   - NEVER infer or invent secondary materials based on assumptions of what products 'typically' contain (e.g. DO NOT assume screw caps exist unless caps are distinctly visible; DO NOT assume labels or tape exist unless clearly visible; DO NOT assume aluminium cans exist unless metallic cans are clearly depicted).
-   - NO contextual inference, environmental speculation, or 'this product usually has X' reasoning.
+2. MULTI-MATERIAL COMPOSITION IDENTIFICATION & RECALL:
+   - SYSTEMATIC VISUAL SCAN: Inspect the entire image systematically (foreground, midground, and background) to detect all genuinely visible, distinct material streams (e.g. transparent/colored rigid plastics, metallic beverage cans, glass containers, closures, paper sleeves).
+   - ANTI-HALLUCINATION: ONLY report material components that are ACTUALLY VISIBLE as distinct physical objects or parts in the provided image. NEVER infer secondary materials based on assumptions of what products 'typically' contain (e.g. DO NOT assume closures exist unless caps are visibly depicted; DO NOT assume metallic cans exist unless metallic cans or foils are visibly depicted).
+   - THOROUGH COMPONENT SEGREGATION: When distinct secondary materials ARE clearly visible in the image (such as metallic aluminium cans mixed into a plastic heap, glass bottles in marine litter, or colored closures on bottles), you MUST report them as distinct components in the "composition" array with specific observed visual evidence.
    - If the image depicts a single homogeneous item or material type without visible secondary components, return EXACTLY ONE component representing 100% estimated visual share.
    - Every listed component MUST have specific, factual visual evidence citing visible features (geometry, color, surface finish, markings, textures) actually observed in the image.
    - DO NOT estimate hidden, microscopic, or internal material layers.
@@ -31,6 +31,7 @@ CORE OPERATIONAL PRINCIPLES:
 4. OBSERVATION VS HYPOTHESIS:
    - State what is ACTUALLY VISIBLE in the image (geometry, opacity, reflections, labels, color, fractures, surface stains).
    - Never pretend visual inspection provides chemical confirmation. Do not claim exact polymer melt flow index, chemical additive packages, moisture content, or internal molecular purity.
+   - Do NOT infer polymer subtype solely from generic visual appearance. If PP vs HDPE cannot be visually distinguished (e.g. for bottle closures), disclose uncertainty and classify under broader material code or OTHER. Never fabricate resin identification.
 5. PHYSICAL CONSTRAINTS & HONESTY:
    - DO NOT claim exact weight from pixels alone. Weight is user-measured.
    - DO NOT claim exact cash spot pricing from pixels alone.
@@ -40,7 +41,7 @@ CORE OPERATIONAL PRINCIPLES:
    - Confidence represents "Model-Estimated Visual Confidence", NOT a statistically calibrated probability.
    - If an image contains mixed items or is ambiguous, expose uncertainty explicitly.
 7. OPERATIONAL PREPARATION & ROUTING:
-   - Identify practical segregation actions (e.g. "Unscrew and remove PP caps", "Peel adhesive tape", "Drain liquid residue").
+   - Identify practical segregation actions (e.g. "Unscrew and remove closure caps", "Peel adhesive tape", "Drain liquid residue").
    - Suggest routing strategy: SINGLE_FACILITY (homogeneous), SPLIT_ROUTING (separable multi-category materials), or SPECIALIZED_DISPOSAL (hazardous or severe contamination).
 
 REQUIRED JSON SCHEMA:
@@ -54,34 +55,34 @@ REQUIRED JSON SCHEMA:
   },
   "composition": [
     {
-      "material": "e.g. Clear PET Bottle Bodies",
-      "material_code": "PLASTIC_PET",
-      "category": "PLASTIC",
-      "estimated_share_percent": 85,
-      "confidence": 92,
-      "polymer_subtype": "PET #1",
-      "visual_evidence": ["Clear transparent fluted bottle bodies", "Standard neck finish"],
+      "material": "Descriptive name of primary visible material (e.g. Clear PET Bottles, Rigid HDPE Containers, Corrugated Cardboard)",
+      "material_code": "PLASTIC_PET" | "PLASTIC_HDPE" | "METAL_ALUMINIUM" | "PAPER_CARDBOARD" | "GLASS_CULLET" | "OTHER",
+      "category": "PLASTIC" | "METAL" | "PAPER" | "GLASS" | "EWASTE" | "TEXTILE" | "OTHER",
+      "estimated_share_percent": 75,
+      "confidence": 90,
+      "polymer_subtype": "Specific grade/alloy if visually identifiable or null",
+      "visual_evidence": ["Direct visual observation 1", "Direct visual observation 2"],
       "contamination_percent": 8,
       "recoverability_score": 90,
       "recoverability_grade": "GRADE_A",
       "is_separable": false,
-      "preparation_actions": ["Flatten bottles to reduce volume"],
-      "uncertainty": ["Intrinsic viscosity cannot be confirmed visually"]
+      "preparation_actions": ["Specific preparation action"],
+      "uncertainty": ["Direct visual uncertainty or limitation"]
     },
     {
-      "material": "e.g. Polypropylene Screw Caps",
-      "material_code": "PLASTIC_PP",
-      "category": "PLASTIC",
-      "estimated_share_percent": 15,
-      "confidence": 88,
-      "polymer_subtype": "PP #5",
-      "visual_evidence": ["Colored opaque threaded closure caps attached to bottle necks"],
+      "material": "Descriptive name of distinct secondary visible material (e.g. Metallic Aluminium Cans, Closures/Caps, Steel Fasteners, Glass Shards)",
+      "material_code": "METAL_ALUMINIUM" | "PLASTIC_PP" | "METAL_STEEL" | "GLASS_CULLET" | "OTHER",
+      "category": "METAL" | "PLASTIC" | "GLASS" | "PAPER" | "OTHER",
+      "estimated_share_percent": 25,
+      "confidence": 85,
+      "polymer_subtype": "Specific subtype if visually identifiable or null",
+      "visual_evidence": ["Direct visual observation of distinct secondary item"],
       "contamination_percent": 5,
       "recoverability_score": 85,
       "recoverability_grade": "GRADE_A",
       "is_separable": true,
-      "preparation_actions": ["Unscrew caps manually prior to baling"],
-      "uncertainty": ["Pigment additive composition unconfirmed"]
+      "preparation_actions": ["Segregation or handling action"],
+      "uncertainty": ["Visual uncertainty for secondary item"]
     }
   ],
   "unresolved_fraction": {
@@ -95,7 +96,7 @@ REQUIRED JSON SCHEMA:
   ],
   "secondary_materials": [
     {
-      "name": "e.g. Polypropylene screw caps",
+      "name": "e.g. Plastic closures",
       "percentage": number (estimated visual portion),
       "separable": boolean,
       "notes": "Advice on manual separation"
@@ -130,10 +131,10 @@ REQUIRED JSON SCHEMA:
   "recovery_decision": {
     "batch_archetype": "Mixed Post-Consumer Packaging",
     "condition_summary": "Low visible contamination (~10%). High clarity bottle stock.",
-    "recommended_action": "Segregate PP caps and drain beverage residue before baling.",
+    "recommended_action": "Segregate closures and drain beverage residue before baling.",
     "economic_effect": "Batch yield optimized by cap removal; clean bottle flake earns top benchmark rate.",
     "routing_strategy": "SINGLE_FACILITY",
-    "routing_rationale": "Single polymer reclaimer accepts batch if caps removed or sink-float separated."
+    "routing_rationale": "Single polymer reclaimer accepts batch if closures removed or sink-float separated."
   },
   "visual_explanation": "Concise 2-sentence summary of what the vision system detected."
 }`;

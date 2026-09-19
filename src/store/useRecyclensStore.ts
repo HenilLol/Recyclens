@@ -25,6 +25,7 @@ interface RecyclensState {
   analysisResult: ScanAnalysisResponse | null;
   selectedRecyclerForRadar: RecyclerMatch | null;
   selectedRecyclerForDispatch: RecyclerMatch | null;
+  selectedScenarioId: string | null;
   isHITLModalOpen: boolean;
   presets: PresetScenario[];
   serverHealth: { status: string; ai_vision_configured: boolean; version: string } | null;
@@ -37,6 +38,7 @@ interface RecyclensState {
   setWeightKg: (weight: number) => void;
   setUserLocation: (loc: { lat: number; lng: number; label: string }) => void;
   selectPreset: (preset: PresetScenario) => void;
+  setSelectedScenarioId: (id: string | null) => void;
   runAnalysis: (overrideImage?: string, overridePresetId?: string) => Promise<void>;
   recalculateWithCustomInputs: (weight: number, contam: number, materialCode: string) => Promise<void>;
   openRadarModal: (match: RecyclerMatch) => void;
@@ -60,6 +62,7 @@ export const useRecyclensStore = create<RecyclensState>((set, get) => ({
   analysisResult: null,
   selectedRecyclerForRadar: null,
   selectedRecyclerForDispatch: null,
+  selectedScenarioId: null,
   isHITLModalOpen: false,
   presets: [],
   serverHealth: null,
@@ -159,6 +162,8 @@ export const useRecyclensStore = create<RecyclensState>((set, get) => ({
     }
   },
 
+  setSelectedScenarioId: (id) => set({ selectedScenarioId: id }),
+
   recalculateWithCustomInputs: async (weight, contam, materialCode) => {
     const { analysisResult, userLocation } = get();
     if (!analysisResult) return;
@@ -170,6 +175,8 @@ export const useRecyclensStore = create<RecyclensState>((set, get) => ({
         contamination_percentage: contam,
         quality_grade: analysisResult.recovery_profile.recoverability.grade,
         location: userLocation,
+        composition: analysisResult.recovery_profile.composition,
+        recovery_profile: analysisResult.recovery_profile,
       });
 
       set({
@@ -180,6 +187,8 @@ export const useRecyclensStore = create<RecyclensState>((set, get) => ({
           eligible_matches: updated.eligible_matches || updated.matches.filter((m: RecyclerMatch) => m.is_eligible),
           incompatible_matches: updated.incompatible_matches || updated.matches.filter((m: RecyclerMatch) => !m.is_eligible),
           split_routes: updated.split_routes || analysisResult.split_routes,
+          optimization_scenarios: updated.optimization_scenarios || analysisResult.optimization_scenarios,
+          optimization_comparison: updated.optimization_comparison || analysisResult.optimization_comparison,
         },
       });
     } catch (err) {
