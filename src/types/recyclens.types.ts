@@ -363,3 +363,120 @@ export interface FeedbackSubmission {
   user_notes?: string;
   contact_email?: string;
 }
+
+// ==================================================
+// PHASE 5.1 — RECOVERY PASSPORT DOMAIN FOUNDATION
+// ==================================================
+
+export type WeightProvenance = 'USER_CONFIRMED_SCALE_WEIGHMENT' | 'ILLUSTRATIVE_VISUAL_PROJECTION';
+
+export type PassportVerificationStatus =
+  | 'UNVERIFIED'
+  | 'OPERATOR_DECLARED_VERIFIED'
+  | 'OPERATOR_VERIFIED';
+
+export type PassportRoutingStatus = 'PLANNED' | 'PROVISIONAL' | 'RECOMMENDED';
+
+export type PassportScenarioSelectedStatus = 'SELECTED_FOR_PASSPORT' | 'COMMITTED';
+
+export interface PassportEvidenceSnapshot {
+  primary_material: DetectedMaterial;
+  composition: BatchComponent[];
+  unresolved_fraction?: UnresolvedFraction;
+  contamination: ContaminationInfo;
+  recoverability: RecoverabilityInfo;
+  visual_evidence: string[];
+  contamination_evidence: string[];
+  uncertainty: string[];
+  visual_explanation: string;
+  batch_weight_kg: number;
+  weight_provenance: WeightProvenance;
+  model_name: string;
+  is_fallback_inference: boolean;
+  captured_at: string;
+}
+
+export interface PassportVerificationSnapshot {
+  verification_status: PassportVerificationStatus;
+  verified_at?: string;
+  confirmed_weight_kg?: number;
+  confirmed_weight_provenance?: 'USER_CONFIRMED_SCALE_WEIGHMENT';
+  material_corrections?: string;
+  contamination_corrections?: number;
+  preparation_confirmation?: 'NOT_PREPARED' | 'PARTIALLY_PREPARED' | 'FULLY_PREPARED';
+  user_notes?: string;
+  verification_disclosure?: string;
+}
+
+export interface PassportScenarioSnapshot {
+  scenario_id: string;
+  scenario_type: ScenarioType | 'NONE';
+  title: string;
+  selected_status: PassportScenarioSelectedStatus;
+  effort_level: EffortLevel | 'NONE';
+  modeled_contamination_percent: number;
+  modeled_recoverability_score: number;
+  modeled_recoverability_grade: QualityGrade;
+  modeled_economic_result: {
+    min: number;
+    max: number;
+    currency: string;
+  };
+  preparation_actions: PreparationActionEvidence[];
+  scenario_assumptions: string[];
+  coefficient_metadata?: ScenarioModelingCoefficients;
+  scenario_disclosure: string;
+}
+
+export interface PassportRoutingSnapshot {
+  routing_status: PassportRoutingStatus;
+  selected_facility_id?: string;
+  selected_facility_name?: string;
+  route_type: 'SINGLE_FACILITY' | 'SPLIT_ROUTING' | 'SPECIALIZED_DISPOSAL';
+  split_routes?: SplitRouteRecommendation[];
+  routing_rationale: string;
+  preparation_requirements: string[];
+  indicative_payout_range: {
+    min: number;
+    max: number;
+  };
+}
+
+export interface PassportIntegrity {
+  algorithm: 'SHA-256';
+  canonical_payload_hash: string;
+  payload_version: string;
+  hashed_fields: string[];
+}
+
+export interface BatchRecoveryPassport {
+  passport_id: string; // Format: RCP-YYYY-<16 HEX CHARACTERS>
+  scan_id: string;
+  created_at: string; // ISO 8601
+  schema_version: '1.0';
+  evidence_snapshot: PassportEvidenceSnapshot;
+  verification_snapshot: PassportVerificationSnapshot;
+  scenario_snapshot: PassportScenarioSnapshot;
+  routing_snapshot: PassportRoutingSnapshot;
+  integrity: PassportIntegrity;
+  snapshot_disclosure: string;
+}
+
+export interface CreatePassportInput {
+  scan_id: string;
+  recovery_profile: RecoveryProfile;
+  weight_kg: number;
+  weight_provenance: WeightProvenance;
+  verification?: Partial<PassportVerificationSnapshot>;
+  selected_scenario?: OptimizationScenario;
+  selected_route?: {
+    routing_status?: PassportRoutingStatus;
+    selected_facility_id?: string;
+    selected_facility_name?: string;
+    route_type?: 'SINGLE_FACILITY' | 'SPLIT_ROUTING' | 'SPECIALIZED_DISPOSAL';
+    split_routes?: SplitRouteRecommendation[];
+    routing_rationale?: string;
+    preparation_requirements?: string[];
+    indicative_payout_range?: { min: number; max: number };
+  };
+}

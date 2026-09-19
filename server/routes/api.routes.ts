@@ -3,6 +3,7 @@ import { scanController } from '../controllers/scan.controller.ts';
 import { ratesController } from '../controllers/rates.controller.ts';
 import { matchController } from '../controllers/match.controller.ts';
 import { feedbackController } from '../controllers/feedback.controller.ts';
+import { passportController } from '../controllers/passport.controller.ts';
 import { aiVisionService } from '../services/ai-vision.service.ts';
 
 const router = Router();
@@ -32,5 +33,8 @@ router.get('/recyclers', (req, res) => matchController.getRecyclers(req, res));
 // Human-In-The-Loop Feedback
 router.post('/feedback', (req, res) => feedbackController.submitFeedback(req, res));
 router.get('/feedback/history', (req, res) => feedbackController.getFeedbackHistory(req, res));
+
+// Recovery Passport (Phase 5.1)
+router.post('/passport/create', (req, res) => passportController.createPassport(req, res));
 
 export default router;
