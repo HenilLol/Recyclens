@@ -1,30 +1,47 @@
 import { GoogleGenerativeAI } from '@google/generative-ai';
 import { z } from 'zod';
-import { RecoveryProfile, MaterialCategory, QualityGrade, ContaminationSeverity } from '../../src/types/recyclens.types.ts';
+import {
+  RecoveryProfile,
+  MaterialCategory,
+  QualityGrade,
+  ContaminationSeverity,
+  BatchComponent,
+  UnresolvedFraction,
+  RecoveryDecision,
+} from '../../src/types/recyclens.types.ts';
 
 const SYSTEM_INSTRUCTION = `You are RecycLens AI, a specialized Material Recovery Intelligence Computer Vision System.
-Your mission is to inspect visual images of post-consumer or commercial recyclable waste and output an auditable, structured RECOVERY EVIDENCE CHAIN.
+Your mission is to inspect visual images of post-consumer or commercial recyclable waste batches and output an auditable, structured MULTI-MATERIAL RECOVERY EVIDENCE CHAIN.
 
 CORE OPERATIONAL PRINCIPLES:
-1. RECOVERY EVIDENCE CHAIN:
-   IMAGE → OBSERVED VISUAL FEATURES → MATERIAL HYPOTHESIS → CONTAMINATION EVIDENCE → RECOVERABILITY ASSESSMENT → UNCERTAINTY / LIMITATIONS → PREPARATION / RECOVERY ACTION
-2. OBSERVATION VS HYPOTHESIS:
-   - State what is ACTUALLY VISIBLE in the image (geometry, opacity, reflections, labels, color, fractures).
+1. MULTI-MATERIAL BATCH RECOVERY EVIDENCE CHAIN:
+   IMAGE/BATCH → COMPOSITION BREAKDOWN → CONTAMINATION EVIDENCE → RECOVERABILITY ASSESSMENT → UNCERTAINTY / LIMITATIONS → PREPARATION / RECOVERY ROUTE
+2. MULTI-MATERIAL COMPOSITION IDENTIFICATION & ANTI-HALLUCINATION:
+   - ONLY identify multiple material components when they are CLEARLY and UNAMBIGUOUSLY VISIBLE as distinct physical objects or components in the provided image.
+   - NEVER infer or invent secondary materials based on assumptions of what products 'typically' contain (e.g. DO NOT assume screw caps exist unless caps are distinctly visible; DO NOT assume labels or tape exist unless clearly visible; DO NOT assume aluminium cans exist unless metallic cans are clearly depicted).
+   - NO contextual inference, environmental speculation, or 'this product usually has X' reasoning.
+   - If the image depicts a single homogeneous item or material type without visible secondary components, return EXACTLY ONE component representing 100% estimated visual share.
+   - Every listed component MUST have specific, factual visual evidence citing visible features (geometry, color, surface finish, markings, textures) actually observed in the image.
+   - DO NOT estimate hidden, microscopic, or internal material layers.
+   - For each component, provide: material, material_code, category, estimated_share_percent, confidence, visual_evidence, contamination_percent, recoverability_score, recoverability_grade, is_separable, preparation_actions, uncertainty.
+3. VISUAL ESTIMATE VS PHYSICAL MASS:
+   - A photograph CANNOT determine exact mass fractions, chemical additives, or hidden layers.
+   - estimated_share_percent MUST be treated strictly as an approximate visual surface area share.
+   - DO NOT manufacture 100% certainty. If portions of the batch are shadowed, obscured, or ambiguous, assign known components their visual share and attribute the remainder to "unresolved_fraction".
+4. OBSERVATION VS HYPOTHESIS:
+   - State what is ACTUALLY VISIBLE in the image (geometry, opacity, reflections, labels, color, fractures, surface stains).
    - Never pretend visual inspection provides chemical confirmation. Do not claim exact polymer melt flow index, chemical additive packages, moisture content, or internal molecular purity.
-3. PHYSICAL CONSTRAINTS & HONESTY:
+5. PHYSICAL CONSTRAINTS & HONESTY:
    - DO NOT claim exact weight from pixels alone. Weight is user-measured.
    - DO NOT claim exact cash spot pricing from pixels alone.
    - DO NOT fabricate facility certifications, approvals, or external regulatory claims.
-4. CONFIDENCE:
+6. CONFIDENCE & UNCERTAINTY:
    - Provide realistic confidence percentages (e.g. 75-95% for distinct items; 35-60% if ambiguous, mixed, dirty, or blurry).
    - Confidence represents "Model-Estimated Visual Confidence", NOT a statistically calibrated probability.
-5. AMBIGUOUS / MIXED BATCHES:
-   - If an image contains mixed items or is ambiguous, reduce confidence, list uncertainties, and use 'OTHER' or 'MIXED_RESIDUAL' where appropriate.
-6. EVIDENCE REQUIREMENTS:
-   - visual_evidence: 3-5 concise, concrete visual observations directly supported by the pixels.
-   - contamination_evidence: 2-4 visual indicators supporting the contamination assessment.
-   - uncertainty: 2-4 explicit physical/chemical limitations or unmeasured variables.
-   - recommended_preparation: 2-4 practical recovery steps to maximize downstream yield before dispatch.
+   - If an image contains mixed items or is ambiguous, expose uncertainty explicitly.
+7. OPERATIONAL PREPARATION & ROUTING:
+   - Identify practical segregation actions (e.g. "Unscrew and remove PP caps", "Peel adhesive tape", "Drain liquid residue").
+   - Suggest routing strategy: SINGLE_FACILITY (homogeneous), SPLIT_ROUTING (separable multi-category materials), or SPECIALIZED_DISPOSAL (hazardous or severe contamination).
 
 REQUIRED JSON SCHEMA:
 {
@@ -34,6 +51,42 @@ REQUIRED JSON SCHEMA:
     "category": "PLASTIC" | "PAPER" | "METAL" | "GLASS" | "EWASTE" | "TEXTILE" | "ORGANIC" | "OTHER",
     "confidence": number between 10 and 99,
     "polymer_subtype": "Optional specific code like PET #1 or HDPE #2"
+  },
+  "composition": [
+    {
+      "material": "e.g. Clear PET Bottle Bodies",
+      "material_code": "PLASTIC_PET",
+      "category": "PLASTIC",
+      "estimated_share_percent": 85,
+      "confidence": 92,
+      "polymer_subtype": "PET #1",
+      "visual_evidence": ["Clear transparent fluted bottle bodies", "Standard neck finish"],
+      "contamination_percent": 8,
+      "recoverability_score": 90,
+      "recoverability_grade": "GRADE_A",
+      "is_separable": false,
+      "preparation_actions": ["Flatten bottles to reduce volume"],
+      "uncertainty": ["Intrinsic viscosity cannot be confirmed visually"]
+    },
+    {
+      "material": "e.g. Polypropylene Screw Caps",
+      "material_code": "PLASTIC_PP",
+      "category": "PLASTIC",
+      "estimated_share_percent": 15,
+      "confidence": 88,
+      "polymer_subtype": "PP #5",
+      "visual_evidence": ["Colored opaque threaded closure caps attached to bottle necks"],
+      "contamination_percent": 5,
+      "recoverability_score": 85,
+      "recoverability_grade": "GRADE_A",
+      "is_separable": true,
+      "preparation_actions": ["Unscrew caps manually prior to baling"],
+      "uncertainty": ["Pigment additive composition unconfirmed"]
+    }
+  ],
+  "unresolved_fraction": {
+    "estimated_share_percent": 0,
+    "visual_reason": "All visible materials resolved"
   },
   "visual_evidence": [
     "Concise factual visual observation 1",
@@ -74,11 +127,19 @@ REQUIRED JSON SCHEMA:
     "Practical preparation step 1",
     "Practical preparation step 2"
   ],
+  "recovery_decision": {
+    "batch_archetype": "Mixed Post-Consumer Packaging",
+    "condition_summary": "Low visible contamination (~10%). High clarity bottle stock.",
+    "recommended_action": "Segregate PP caps and drain beverage residue before baling.",
+    "economic_effect": "Batch yield optimized by cap removal; clean bottle flake earns top benchmark rate.",
+    "routing_strategy": "SINGLE_FACILITY",
+    "routing_rationale": "Single polymer reclaimer accepts batch if caps removed or sink-float separated."
+  },
   "visual_explanation": "Concise 2-sentence summary of what the vision system detected."
 }`;
 
-const TOTAL_AI_BUDGET_MS = 28000;
-const MAX_CANDIDATE_TIMEOUT_MS = 18000;
+export const TOTAL_AI_BUDGET_MS = 28000;
+export const MAX_CANDIDATE_TIMEOUT_MS = 18000;
 
 // Zod Schema for Validating Gemini AI Multimodal Response
 export const rawAIResponseSchema = z.object({
@@ -89,15 +150,45 @@ export const rawAIResponseSchema = z.object({
     confidence: z.number(),
     polymer_subtype: z.string().max(100).nullable().optional(),
   }),
-  visual_evidence: z.array(z.string().max(500)).optional().default([]),
-  secondary_materials: z.array(
-    z.object({
-      name: z.string().max(100),
-      percentage: z.number().min(0).max(100),
-      separable: z.boolean(),
-      notes: z.string().max(300).nullable().optional(),
+  composition: z
+    .array(
+      z.object({
+        material: z.string().max(100).optional().default(''),
+        material_code: z.string().max(50).optional().default('OTHER'),
+        category: z.enum(['PLASTIC', 'PAPER', 'METAL', 'GLASS', 'EWASTE', 'TEXTILE', 'ORGANIC', 'OTHER']).optional().default('OTHER'),
+        estimated_share_percent: z.number().optional().default(0),
+        confidence: z.number().optional().default(80),
+        polymer_subtype: z.string().max(100).nullable().optional(),
+        visual_evidence: z.array(z.string().max(500)).optional().default([]),
+        contamination_percent: z.number().optional().default(0),
+        recoverability_score: z.number().optional().default(80),
+        recoverability_grade: z.enum(['GRADE_A', 'GRADE_B', 'GRADE_C', 'REJECT']).optional().default('GRADE_B'),
+        is_separable: z.boolean().optional().default(true),
+        preparation_actions: z.array(z.string().max(500)).optional().default([]),
+        uncertainty: z.array(z.string().max(500)).optional().default([]),
+      })
+    )
+    .optional()
+    .default([]),
+  unresolved_fraction: z
+    .object({
+      estimated_share_percent: z.number(),
+      visual_reason: z.string().max(500),
     })
-  ).optional().default([]),
+    .nullable()
+    .optional(),
+  visual_evidence: z.array(z.string().max(500)).optional().default([]),
+  secondary_materials: z
+    .array(
+      z.object({
+        name: z.string().max(100),
+        percentage: z.number().min(0).max(100),
+        separable: z.boolean(),
+        notes: z.string().max(300).nullable().optional(),
+      })
+    )
+    .optional()
+    .default([]),
   contamination: z.object({
     percentage: z.number(),
     type: z.string().max(100),
@@ -115,25 +206,34 @@ export const rawAIResponseSchema = z.object({
   }),
   uncertainty: z.array(z.string().max(500)).optional().default([]),
   recommended_preparation: z.array(z.string().max(500)).optional().default([]),
+  recovery_decision: z
+    .object({
+      batch_archetype: z.string().max(150),
+      condition_summary: z.string().max(500),
+      recommended_action: z.string().max(500),
+      economic_effect: z.string().max(500),
+      routing_strategy: z.enum(['SINGLE_FACILITY', 'SPLIT_ROUTING', 'SPECIALIZED_DISPOSAL']),
+      routing_rationale: z.string().max(500),
+    })
+    .nullable()
+    .optional(),
   visual_explanation: z.string().max(1000),
 });
 
 /**
  * Normalizes and applies deterministic consistency rules to AI Vision response.
- * NOTE: Schema validation verifies structural correctness and numeric/data bounds.
- * It does not independently verify the semantic truth of model-generated visual observations.
- * RecycLens therefore treats visual evidence as model-generated observations and explicitly
- * exposes uncertainty rather than claiming semantic verification.
+ * Implements Phase 3 multi-material batch composition normalization, batch contamination
+ * aggregation, batch recoverability aggregation, and operational decision synthesis.
  */
 export function normalizeAndValidateAIResponse(raw: unknown): Omit<RecoveryProfile, 'id' | 'scan_id' | 'timestamp'> {
   const parsed = rawAIResponseSchema.parse(raw);
 
-  // 1. Clamp numeric bounds safely
+  // 1. Clamp numeric bounds safely for primary fields
   const clampedConfidence = Math.min(99, Math.max(10, Math.round(parsed.primary_material.confidence * 10) / 10));
   const clampedContamPct = Math.min(100, Math.max(0, Math.round(parsed.contamination.percentage * 10) / 10));
   const clampedRecoverScore = Math.min(100, Math.max(10, Math.round(parsed.recoverability.score * 10) / 10));
 
-  // 2. Filter & clean array strings
+  // 2. Filter & clean primary array strings
   const cleanVisualEvidence = (parsed.visual_evidence || [])
     .map((s) => s.trim())
     .filter((s) => s.length > 0)
@@ -191,12 +291,282 @@ export function normalizeAndValidateAIResponse(raw: unknown): Omit<RecoveryProfi
     cleanPrep.push(parsed.recoverability.actionable_advice || 'Segregate clean recyclables from contaminated fractions.');
   }
 
+  // =========================================================================
+  // 8. PHASE 3 MULTI-MATERIAL COMPOSITION NORMALIZATION
+  // =========================================================================
+  let rawComponents = parsed.composition || [];
+
+  // Backward Compatibility: If model omitted composition array, synthesize from primary material
+  if (rawComponents.length === 0) {
+    rawComponents = [
+      {
+        material: parsed.primary_material.name,
+        material_code: parsed.primary_material.code,
+        category: parsed.primary_material.category,
+        estimated_share_percent: 100,
+        confidence: clampedConfidence,
+        polymer_subtype: parsed.primary_material.polymer_subtype || undefined,
+        visual_evidence: cleanVisualEvidence,
+        contamination_percent: clampedContamPct,
+        recoverability_score: clampedRecoverScore,
+        recoverability_grade: parsed.recoverability.grade,
+        is_separable: false,
+        preparation_actions: cleanPrep,
+        uncertainty: cleanUncertainty,
+      },
+    ];
+  }
+
+  // Filter empty components and clamp per-component metrics
+  const validComponents: BatchComponent[] = [];
+  const seenCodes = new Map<string, BatchComponent>();
+
+  for (const item of rawComponents) {
+    const matName = item.material?.trim();
+    const rawShare = Number(item.estimated_share_percent);
+    if (!matName || isNaN(rawShare) || rawShare <= 0) continue;
+
+    const clampedShare = Math.min(100, Math.max(1, Math.round(rawShare * 10) / 10));
+    const compConf = Math.min(99, Math.max(10, Math.round(Number(item.confidence || clampedConfidence) * 10) / 10));
+    const compContam = Math.min(100, Math.max(0, Math.round(Number(item.contamination_percent ?? clampedContamPct) * 10) / 10));
+    const compRecover = Math.min(100, Math.max(10, Math.round(Number(item.recoverability_score ?? clampedRecoverScore) * 10) / 10));
+
+    // Ensure visual evidence exists for each component
+    let compVisualEvidence = (item.visual_evidence || [])
+      .map((s) => s.trim())
+      .filter((s) => s.length > 0)
+      .slice(0, 4);
+
+    const isPrimaryComponent =
+      matName.toLowerCase() === parsed.primary_material.name.toLowerCase() || validComponents.length === 0;
+
+    // Ensure component uncertainty exists
+    let compUncertainty = (item.uncertainty || [])
+      .map((s) => s.trim())
+      .filter((s) => s.length > 0)
+      .slice(0, 3);
+    if (compUncertainty.length === 0) {
+      compUncertainty = [`Sub-component share estimated visually; exact mass requires physical weighment.`];
+    }
+    if (compConf < 60 || item.material_code === 'OTHER') {
+      if (!compUncertainty.some((u) => u.toLowerCase().includes('ambiguous') || u.toLowerCase().includes('ambiguity'))) {
+        compUncertainty.unshift(`Classification for ${matName} is visually ambiguous; requires dock sorting confirmation.`);
+      }
+    }
+
+    if (compVisualEvidence.length === 0) {
+      if (isPrimaryComponent) {
+        compVisualEvidence = [`Visual morphology consistent with ${matName} (unconfirmed by specific feature evidence).`];
+        compUncertainty.push('Primary component classification lacks specific feature evidence; requires physical inspection.');
+      } else {
+        // Do not convert speculation into "observed evidence" — reject unevidenced secondary components
+        continue;
+      }
+    }
+
+    const prepActions = (item.preparation_actions || [])
+      .map((s) => s.trim())
+      .filter((s) => s.length > 0)
+      .slice(0, 4);
+
+    const comp: BatchComponent = {
+      material: matName,
+      material_code: item.material_code || 'OTHER',
+      category: item.category || 'OTHER',
+      estimated_share_percent: clampedShare,
+      confidence: compConf,
+      polymer_subtype: item.polymer_subtype ? item.polymer_subtype.trim() : undefined,
+      visual_evidence: compVisualEvidence,
+      contamination_percent: compContam,
+      recoverability_score: compRecover,
+      recoverability_grade: item.recoverability_grade || parsed.recoverability.grade,
+      is_separable: typeof item.is_separable === 'boolean' ? item.is_separable : true,
+      preparation_actions: prepActions.length > 0 ? prepActions : cleanPrep.slice(0, 2),
+      uncertainty: compUncertainty,
+    };
+
+    // Deduplicate identical material codes by aggregating shares
+    if (seenCodes.has(comp.material_code)) {
+      const existing = seenCodes.get(comp.material_code)!;
+      existing.estimated_share_percent = Math.min(100, existing.estimated_share_percent + comp.estimated_share_percent);
+      existing.contamination_percent = Math.round(((existing.contamination_percent + comp.contamination_percent) / 2) * 10) / 10;
+      existing.recoverability_score = Math.round(((existing.recoverability_score + comp.recoverability_score) / 2) * 10) / 10;
+      existing.visual_evidence = Array.from(new Set([...existing.visual_evidence, ...comp.visual_evidence])).slice(0, 4);
+    } else {
+      seenCodes.set(comp.material_code, comp);
+      validComponents.push(comp);
+    }
+  }
+
+  // Safety fallback if all components were dropped
+  if (validComponents.length === 0) {
+    validComponents.push({
+      material: parsed.primary_material.name,
+      material_code: parsed.primary_material.code,
+      category: parsed.primary_material.category,
+      estimated_share_percent: 100,
+      confidence: clampedConfidence,
+      polymer_subtype: parsed.primary_material.polymer_subtype || undefined,
+      visual_evidence: cleanVisualEvidence,
+      contamination_percent: clampedContamPct,
+      recoverability_score: clampedRecoverScore,
+      recoverability_grade: parsed.recoverability.grade,
+      is_separable: false,
+      preparation_actions: cleanPrep,
+      uncertainty: cleanUncertainty,
+    });
+  }
+
+  // Limit max components to 6 for production safety
+  const finalComponents = validComponents.slice(0, 6);
+
+  // Normalize percentages: scale down if sum > 100; represent remainder as unresolved if sum < 100
+  const rawSum = finalComponents.reduce((acc, c) => acc + c.estimated_share_percent, 0);
+  let unresolvedFraction: UnresolvedFraction | undefined = undefined;
+
+  if (rawSum > 100) {
+    // Proportional downscaling
+    let runningSum = 0;
+    for (let i = 0; i < finalComponents.length; i++) {
+      const scaled = Math.max(1, Math.round((finalComponents[i].estimated_share_percent / rawSum) * 100));
+      finalComponents[i].estimated_share_percent = scaled;
+      runningSum += scaled;
+    }
+    // Adjust rounding delta on the highest component
+    const delta = 100 - runningSum;
+    if (delta !== 0) {
+      finalComponents.sort((a, b) => b.estimated_share_percent - a.estimated_share_percent);
+      finalComponents[0].estimated_share_percent = Math.max(1, finalComponents[0].estimated_share_percent + delta);
+    }
+    unresolvedFraction = undefined;
+  } else if (rawSum < 100) {
+    const remainder = Math.round((100 - rawSum) * 10) / 10;
+    if (remainder >= 1.0) {
+      const parsedReason = parsed.unresolved_fraction?.visual_reason?.trim();
+      unresolvedFraction = {
+        estimated_share_percent: remainder,
+        visual_reason:
+          parsedReason ||
+          'Portion obscured, shaded, or visually ambiguous; requires physical sorting and inspection at dock intake.',
+      };
+      // Mandatory uncertainty disclosure for unresolved material
+      if (!cleanUncertainty.some((u) => u.toLowerCase().includes('unresolved') || u.toLowerCase().includes('obscured'))) {
+        cleanUncertainty.push(`Approx. ${remainder}% of batch volume is visually unresolved from the photographic perspective.`);
+      }
+    }
+  }
+
+  // =========================================================================
+  // 9. BATCH-LEVEL CONTAMINATION AGGREGATION
+  // Formula:
+  // Batch Contam % = sum(component[i].contam% * (share% / 100)) + (unresolved_share% * 0.50)
+  // Explanation: Each component contributes contamination proportional to its visual share.
+  // Unresolved fractions carry a conservative 50% contamination risk factor.
+  // =========================================================================
+  const unresolvedShare = unresolvedFraction ? unresolvedFraction.estimated_share_percent : 0;
+  const weightedComponentContam = finalComponents.reduce(
+    (acc, c) => acc + c.contamination_percent * (c.estimated_share_percent / 100),
+    0
+  );
+  // If raw input did not provide composition array, preserve primary values for 100% backward compatibility
+  const aggregatedContamPct =
+    (!parsed.composition || parsed.composition.length === 0)
+      ? clampedContamPct
+      : Math.min(100, Math.max(0, Math.round((weightedComponentContam + unresolvedShare * 0.5) * 10) / 10));
+
+  let aggregatedSeverity: ContaminationSeverity = 'LOW';
+  if (aggregatedContamPct < 5) aggregatedSeverity = 'CLEAN';
+  else if (aggregatedContamPct <= 15) aggregatedSeverity = 'LOW';
+  else if (aggregatedContamPct <= 30) aggregatedSeverity = 'MODERATE';
+  else if (aggregatedContamPct <= 50) aggregatedSeverity = 'HIGH';
+  else aggregatedSeverity = 'CRITICAL';
+
+  // =========================================================================
+  // 10. BATCH-LEVEL RECOVERABILITY AGGREGATION
+  // Formula:
+  // Batch Recoverability Score = sum(component[i].score * (share% / 100)) - (unresolved_share% * 0.30)
+  // Explanation: Weighted recoverability of components penalized by unclassified fraction uncertainty.
+  // =========================================================================
+  const weightedComponentRecover = finalComponents.reduce(
+    (acc, c) => acc + c.recoverability_score * (c.estimated_share_percent / 100),
+    0
+  );
+  const aggregatedRecoverScore =
+    (!parsed.composition || parsed.composition.length === 0)
+      ? clampedRecoverScore
+      : Math.min(100, Math.max(10, Math.round((weightedComponentRecover - unresolvedShare * 0.3) * 10) / 10));
+
+  let aggregatedGrade: QualityGrade = 'GRADE_B';
+  if (aggregatedRecoverScore >= 85) aggregatedGrade = 'GRADE_A';
+  else if (aggregatedRecoverScore >= 70) aggregatedGrade = 'GRADE_B';
+  else if (aggregatedRecoverScore >= 50) aggregatedGrade = 'GRADE_C';
+  else aggregatedGrade = 'REJECT';
+
+  const isBatchCommerciallyViable = aggregatedRecoverScore >= 50 && aggregatedGrade !== 'REJECT';
+
+  // =========================================================================
+  // 11. BATCH RECOVERY DECISION SYNTHESIS
+  // Determines operational routing strategy:
+  // - SINGLE_FACILITY: Homogeneous polymer or single-stream compatible batch
+  // - SPLIT_ROUTING: Multi-material batch with separable distinct categories
+  // - SPECIALIZED_DISPOSAL: Grade REJECT, OTHER, or extreme contamination
+  // =========================================================================
+  const distinctCategories = Array.from(new Set(finalComponents.map((c) => c.category)));
+  const separableComponents = finalComponents.filter((c) => c.is_separable && c.estimated_share_percent >= 5);
+  const isMultiMaterial = finalComponents.length > 1;
+
+  let routingStrategy: 'SINGLE_FACILITY' | 'SPLIT_ROUTING' | 'SPECIALIZED_DISPOSAL' = 'SINGLE_FACILITY';
+  let routingRationale = '';
+
+  if (aggregatedGrade === 'REJECT' || aggregatedContamPct >= 65 || parsed.primary_material.code === 'OTHER') {
+    routingStrategy = 'SPECIALIZED_DISPOSAL';
+    routingRationale = 'High visible contamination, unclassified material, or degraded recoverability requires specialized decontamination or municipal disposal.';
+  } else if (isMultiMaterial && distinctCategories.length > 1 && separableComponents.length > 0) {
+    routingStrategy = 'SPLIT_ROUTING';
+    routingRationale = `Batch contains distinct separable material streams (${distinctCategories.join(
+      ' + '
+    )}). Segregation into dedicated recovery channels maximizes realization.`;
+  } else {
+    routingStrategy = 'SINGLE_FACILITY';
+    routingRationale = `Single-stream intake compatible with standard ${parsed.primary_material.category} reclaimers.`;
+  }
+
+  const batchArchetype = isMultiMaterial
+    ? `Multi-Material Batch (${finalComponents.map((c) => `${c.material} ~${c.estimated_share_percent}%`).join(', ')})`
+    : `${parsed.primary_material.name} Monomaterial Batch`;
+
+  const conditionSummary = `${aggregatedSeverity} visible contamination (~${aggregatedContamPct}%). ${
+    unresolvedFraction
+      ? `~${unresolvedFraction.estimated_share_percent}% visually unresolved/ambiguous fraction.`
+      : 'Full batch visibility across detected components.'
+  }`;
+
+  const recommendedAction = isMultiMaterial && separableComponents.length > 0
+    ? `Segregate ${separableComponents.map((c) => c.material).join(' and ')} before dispatch. Drain liquids and remove gross contaminants.`
+    : (cleanPrep[0] || 'Clean, compact, and bale batch for direct facility intake.');
+
+  const economicEffect = unresolvedShare > 0
+    ? `Indicative batch value reduced by ~${aggregatedContamPct}% contamination deduction; ~${unresolvedShare}% unresolved material carries ₹0 baseline valuation.`
+    : `Indicative value reflects ~${aggregatedContamPct}% contamination deduction against regional benchmark rates.`;
+
+  const recoveryDecision: RecoveryDecision = {
+    batch_archetype: batchArchetype,
+    condition_summary: conditionSummary,
+    recommended_action: recommendedAction,
+    economic_effect: economicEffect,
+    routing_strategy: routingStrategy,
+    routing_rationale: routingRationale,
+  };
+
   return {
     primary_material: {
       ...parsed.primary_material,
       polymer_subtype: parsed.primary_material.polymer_subtype || undefined,
       confidence: clampedConfidence,
     },
+    composition: finalComponents,
+    unresolved_fraction: unresolvedFraction,
+    recovery_decision: recoveryDecision,
     visual_evidence: cleanVisualEvidence,
     secondary_materials: parsed.secondary_materials.slice(0, 5).map((m) => ({
       ...m,
@@ -204,13 +574,16 @@ export function normalizeAndValidateAIResponse(raw: unknown): Omit<RecoveryProfi
     })),
     contamination: {
       ...parsed.contamination,
-      percentage: clampedContamPct,
+      percentage: aggregatedContamPct,
+      severity: aggregatedSeverity,
       visual_indicators: parsed.contamination.visual_indicators.slice(0, 5),
     },
     contamination_evidence: cleanContamEvidence,
     recoverability: {
       ...parsed.recoverability,
-      score: clampedRecoverScore,
+      score: aggregatedRecoverScore,
+      grade: aggregatedGrade,
+      is_commercially_viable: isBatchCommerciallyViable,
       potential_applications: parsed.recoverability.potential_applications.slice(0, 4),
     },
     uncertainty: cleanUncertainty.slice(0, 5),

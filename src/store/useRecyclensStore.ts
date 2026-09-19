@@ -179,6 +179,7 @@ export const useRecyclensStore = create<RecyclensState>((set, get) => ({
           matches: updated.matches,
           eligible_matches: updated.eligible_matches || updated.matches.filter((m: RecyclerMatch) => m.is_eligible),
           incompatible_matches: updated.incompatible_matches || updated.matches.filter((m: RecyclerMatch) => !m.is_eligible),
+          split_routes: updated.split_routes || analysisResult.split_routes,
         },
       });
     } catch (err) {

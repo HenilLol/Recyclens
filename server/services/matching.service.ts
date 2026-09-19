@@ -1,5 +1,12 @@
 import recyclersData from '../data/seed-recyclers.json';
-import { RecyclerPartner, RecyclerMatch, MatchScorecard, ValuationBreakdown } from '../../src/types/recyclens.types.ts';
+import {
+  RecyclerPartner,
+  RecyclerMatch,
+  MatchScorecard,
+  ValuationBreakdown,
+  BatchComponent,
+  SplitRouteRecommendation,
+} from '../../src/types/recyclens.types.ts';
 
 function calculateHaversineDistance(lat1: number, lon1: number, lat2: number, lon2: number): number {
   const R = 6371; // Earth radius in km
@@ -25,12 +32,14 @@ export class MatchingService {
     contaminationPercentage: number;
     userLocation: { lat: number; lng: number; label?: string };
     valuation: ValuationBreakdown;
+    composition?: BatchComponent[];
   }): {
     allMatches: RecyclerMatch[];
     eligibleMatches: RecyclerMatch[];
     incompatibleMatches: RecyclerMatch[];
+    splitRoutes?: SplitRouteRecommendation[];
   } {
-    const { materialCode, weightKg, contaminationPercentage, userLocation, valuation } = params;
+    const { materialCode, weightKg, contaminationPercentage, userLocation, valuation, composition } = params;
 
     const allMatches: RecyclerMatch[] = this.recyclers.map((recycler) => {
       const distanceKm = calculateHaversineDistance(
@@ -41,8 +50,23 @@ export class MatchingService {
       );
 
       // 1. Material Compatibility (35% weight)
-      const acceptsMaterial = recycler.accepted_materials.includes(materialCode);
-      const materialScore = acceptsMaterial ? 100 : 0;
+      const acceptsPrimary = recycler.accepted_materials.includes(materialCode);
+      const unacceptedComponents = composition
+        ? composition.filter((c) => !recycler.accepted_materials.includes(c.material_code))
+        : [];
+      const acceptedComponents = composition
+        ? composition.filter((c) => recycler.accepted_materials.includes(c.material_code))
+        : [];
+
+      let materialScore = acceptsPrimary ? 100 : 0;
+      if (composition && composition.length > 1) {
+        const acceptedShare = acceptedComponents.reduce((sum, c) => sum + c.estimated_share_percent, 0);
+        if (acceptsPrimary || acceptedShare >= 50) {
+          materialScore = Math.max(20, Math.round(acceptedShare));
+        } else {
+          materialScore = 0;
+        }
+      }
 
       // 2. Quantity Compatibility (20% weight)
       let quantityScore = 100;
@@ -73,8 +97,8 @@ export class MatchingService {
       const verificationScore = recycler.verification_status === 'DEMO_ARCHETYPE' ? 100 : 80;
 
       // Determine Eligibility:
-      // A route is ELIGIBLE only if it accepts the material AND is not severely contaminated beyond handling limits
-      const isEligible = acceptsMaterial && !severeContamination;
+      // A route is ELIGIBLE only if it accepts primary intake and is not severely contaminated beyond handling limits
+      const isEligible = acceptsPrimary && !severeContamination;
 
       // Weighted Composite Score
       const totalScore = Math.round(
@@ -95,10 +119,17 @@ export class MatchingService {
       const reasons: string[] = [];
       const warnings: string[] = [];
 
-      if (acceptsMaterial) {
+      if (acceptsPrimary) {
         reasons.push(`Direct intake capability configured for ${materialCode.replace('_', ' ')}`);
+        if (acceptedComponents.length > 1) {
+          reasons.push(`Compatible with multiple batch components: ${acceptedComponents.map((c) => c.material).join(', ')}`);
+        }
       } else {
         warnings.push(`Does not accept ${materialCode.replace('_', ' ')} as primary intake`);
+      }
+
+      if (unacceptedComponents.length > 0 && acceptsPrimary && unacceptedComponents.length < (composition?.length || 0)) {
+        warnings.push(`Batch contains non-intake fractions (${unacceptedComponents.map((c) => c.material).join(', ')}); dock sorting or pre-separation required`);
       }
 
       if (weightKg >= recycler.min_batch_weight_kg) {
@@ -154,10 +185,66 @@ export class MatchingService {
     const eligibleMatches = allMatches.filter((m) => m.is_eligible).sort((a, b) => b.total_score - a.total_score);
     const incompatibleMatches = allMatches.filter((m) => !m.is_eligible).sort((a, b) => b.total_score - a.total_score);
 
+    // Multi-Material Split Route Generation
+    let splitRoutes: SplitRouteRecommendation[] | undefined = undefined;
+    if (composition && composition.length > 1) {
+      const distinctCategories = Array.from(new Set(composition.map((c) => c.category)));
+      const separableMajor = composition.filter((c) => c.is_separable && c.estimated_share_percent >= 5);
+
+      if (distinctCategories.length > 1 && separableMajor.length >= 1) {
+        const routes: SplitRouteRecommendation[] = [];
+
+        for (const comp of composition) {
+          if (comp.estimated_share_percent < 5) continue;
+
+          // Find closest compatible facility for this component
+          const compatibleRecyclers = this.recyclers.filter((r) => r.accepted_materials.includes(comp.material_code));
+          let bestRecycler: RecyclerPartner | undefined = undefined;
+          let bestDist = Infinity;
+
+          for (const r of compatibleRecyclers) {
+            const dist = calculateHaversineDistance(userLocation.lat, userLocation.lng, r.location.lat, r.location.lng);
+            if (dist < bestDist) {
+              bestDist = dist;
+              bestRecycler = r;
+            }
+          }
+
+          const compVal = valuation.component_valuations?.find((cv) => cv.material_code === comp.material_code);
+          const compPayout = compVal
+            ? { min: compVal.indicative_net_range.min, max: compVal.indicative_net_range.max }
+            : { min: 0, max: 0 };
+
+          const allocatedKg = Math.round(weightKg * (comp.estimated_share_percent / 100) * 10) / 10;
+
+          routes.push({
+            material_code: comp.material_code,
+            material_name: comp.material,
+            allocated_weight_kg: allocatedKg,
+            illustrative_weight_kg: allocatedKg,
+            is_provisional: true,
+            routing_status: 'PROVISIONAL_SPLIT_ROUTE',
+            quantity_basis_disclosure:
+              'Illustrative channel mass projected from estimated visual share; routing is provisional pending dock sorting and physical scale weighment.',
+            suggested_recycler_id: bestRecycler?.id,
+            suggested_recycler_name: bestRecycler ? bestRecycler.name : 'Regional Specialized Aggregator',
+            target_facility_type: bestRecycler ? bestRecycler.badge : `${comp.category} Recovery Facility`,
+            estimated_payout_range: compPayout,
+            preparation_required: comp.preparation_actions,
+          });
+        }
+
+        if (routes.length >= 2) {
+          splitRoutes = routes;
+        }
+      }
+    }
+
     return {
       allMatches: [...eligibleMatches, ...incompatibleMatches],
       eligibleMatches,
       incompatibleMatches,
+      splitRoutes,
     };
   }
 }

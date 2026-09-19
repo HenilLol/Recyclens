@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { useRecyclensStore } from '../../store/useRecyclensStore.ts';
 import { RecyclerCard } from './RecyclerCard.tsx';
-import { Truck, Filter, Shield, AlertTriangle, CheckCircle2 } from 'lucide-react';
+import { Truck, Filter, Shield, AlertTriangle, CheckCircle2, Split, ArrowUpRight } from 'lucide-react';
 import { RecyclerMatch } from '../../types/recyclens.types.ts';
 
 export const RecyclerList: React.FC = () => {
@@ -10,6 +10,8 @@ export const RecyclerList: React.FC = () => {
   const [sortBy, setSortBy] = useState<'score' | 'distance' | 'payout'>('score');
 
   if (!analysisResult) return null;
+
+  const splitRoutes = analysisResult.split_routes;
 
   // Use separated eligible vs incompatible matches if available, or compute on the fly
   let eligibleMatches = (analysisResult.eligible_matches || analysisResult.matches.filter((m) => m.is_eligible));
@@ -85,12 +87,69 @@ export const RecyclerList: React.FC = () => {
         </div>
       </div>
 
+      {/* MULTI-MATERIAL SPLIT ROUTE DISPATCH PLAN */}
+      {splitRoutes && splitRoutes.length > 0 && (
+        <div className="p-6 rounded-3xl hud-glass border border-purple-500/40 bg-purple-500/5 shadow-xl">
+          <div className="flex items-center space-x-2 pb-3 border-b border-purple-500/20 mb-4">
+            <Split className="w-4 h-4 text-purple-400" />
+            <h3 className="text-xs font-bold uppercase tracking-wider text-purple-300 font-mono">
+              PROVISIONAL SPLIT ROUTE DISPATCH STRATEGY
+            </h3>
+            <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-purple-500/20 text-purple-300">
+              {splitRoutes.length} Material Channels (Provisional)
+            </span>
+          </div>
+
+          <p className="text-xs text-slate-300 mb-4 leading-relaxed">
+            Because this batch contains distinct material categories with separable sub-streams, provisional routing channels to specialized regional facilities indicate higher net recovery than a single mixed intake. Quantities represent illustrative projections:
+          </p>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+            {splitRoutes.map((sr, idx) => (
+              <div
+                key={idx}
+                className="p-4 rounded-2xl bg-slate-900/80 border border-purple-500/20 flex flex-col justify-between space-y-3"
+              >
+                <div>
+                  <div className="flex items-start justify-between gap-2">
+                    <span className="text-xs font-bold text-slate-100">{sr.material_name}</span>
+                    <span className="text-[11px] font-mono font-bold text-purple-300 bg-purple-500/10 px-2 py-0.5 rounded">
+                      ~{sr.allocated_weight_kg} kg (Projected)
+                    </span>
+                  </div>
+                  <div className="text-[11px] text-slate-400 mt-1 flex items-center space-x-1.5">
+                    <ArrowUpRight className="w-3.5 h-3.5 text-cyan-400 flex-shrink-0" />
+                    <span>Target: <strong className="text-slate-200">{sr.suggested_recycler_name}</strong></span>
+                  </div>
+                  <div className="text-[10px] font-mono text-slate-500 mt-0.5">
+                    {sr.target_facility_type}
+                  </div>
+                </div>
+
+                <div className="pt-2 border-t border-slate-800/80 flex items-center justify-between text-[11px]">
+                  <span className="text-slate-400">Indicative Stream Value:</span>
+                  <strong className="font-mono text-emerald-400">
+                    ₹{sr.estimated_payout_range.min} – ₹{sr.estimated_payout_range.max}
+                  </strong>
+                </div>
+
+                {sr.preparation_required && sr.preparation_required.length > 0 && (
+                  <div className="text-[10px] text-slate-400 italic bg-slate-950/60 p-2 rounded-lg border border-slate-800">
+                    Prep: {sr.preparation_required[0]}
+                  </div>
+                )}
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
       {/* SECTION 1: ELIGIBLE RECOVERY ROUTES */}
       <div>
         <div className="flex items-center space-x-2 mb-3">
           <CheckCircle2 className="w-4 h-4 text-emerald-400" />
           <h3 className="text-xs font-bold uppercase tracking-wider text-slate-200 font-mono">
-            Eligible Recovery Routes ({eligibleMatches.length})
+            Direct Single-Facility Routes ({eligibleMatches.length})
           </h3>
         </div>
 

@@ -74,6 +74,53 @@ export const RecoveryProfileCard: React.FC = () => {
         </div>
       </div>
 
+      {/* Executive Recovery Decision Banner */}
+      {recovery_profile.recovery_decision && (
+        <div className="my-5 p-4 rounded-2xl bg-gradient-to-r from-slate-900 via-slate-900/90 to-slate-950 border border-cyan-500/30">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pb-3 border-b border-slate-800">
+            <div className="flex items-center space-x-2">
+              <span className="w-2 h-2 rounded-full bg-cyan-400 animate-pulse" />
+              <span className="text-[11px] font-mono font-bold uppercase tracking-wider text-cyan-300">
+                OPERATIONAL RECOVERY DECISION
+              </span>
+              <span className="text-xs font-mono text-slate-400">
+                • {recovery_profile.recovery_decision.batch_archetype}
+              </span>
+            </div>
+
+            <div className="flex items-center space-x-1.5">
+              <span className="text-[10px] font-mono uppercase text-slate-400">Routing Strategy:</span>
+              <span className={`text-[10px] font-mono font-bold uppercase px-2 py-0.5 rounded border ${
+                recovery_profile.recovery_decision.routing_strategy === 'SPLIT_ROUTING'
+                  ? 'bg-purple-500/20 text-purple-300 border-purple-500/40'
+                  : recovery_profile.recovery_decision.routing_strategy === 'SPECIALIZED_DISPOSAL'
+                  ? 'bg-amber-500/20 text-amber-300 border-amber-500/40'
+                  : 'bg-emerald-500/20 text-emerald-300 border-emerald-500/40'
+              }`}>
+                {recovery_profile.recovery_decision.routing_strategy.replace('_', ' ')}
+              </span>
+            </div>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-3 mt-3 text-xs">
+            <div className="p-3 rounded-xl bg-slate-950/60 border border-slate-800/80">
+              <div className="text-[10px] font-mono uppercase text-slate-400 mb-1">Condition & Contamination</div>
+              <div className="text-slate-200 leading-relaxed font-sans">{recovery_profile.recovery_decision.condition_summary}</div>
+            </div>
+            <div className="p-3 rounded-xl bg-slate-950/60 border border-slate-800/80">
+              <div className="text-[10px] font-mono uppercase text-emerald-400 mb-1">Recommended Operation</div>
+              <div className="text-slate-200 leading-relaxed font-sans">{recovery_profile.recovery_decision.recommended_action}</div>
+            </div>
+            <div className="p-3 rounded-xl bg-slate-950/60 border border-slate-800/80">
+              <div className="text-[10px] font-mono uppercase text-cyan-400 mb-1">Economic & Routing Rationale</div>
+              <div className="text-slate-300 leading-relaxed font-sans">
+                {recovery_profile.recovery_decision.economic_effect} {recovery_profile.recovery_decision.routing_rationale}
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Main Grid: Recoverability & Commercial Viability */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4 my-5">
         {/* Metric 1: Quality Grade */}

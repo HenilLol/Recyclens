@@ -1,7 +1,7 @@
 import React from 'react';
 import { useRecyclensStore } from '../../store/useRecyclensStore.ts';
 import { formatINR } from '../../utils/formatters.ts';
-import { DollarSign, TrendingDown, Scale, Info, ArrowRight } from 'lucide-react';
+import { DollarSign, TrendingDown, Scale, Info, ArrowRight, Layers } from 'lucide-react';
 import { ContaminationPenaltyBar } from './ContaminationPenaltyBar.tsx';
 import { PriceSourceDisclaimer } from './PriceSourceDisclaimer.tsx';
 
@@ -100,6 +100,67 @@ export const ValuationCard: React.FC = () => {
           netMin={indicative_net_range.min}
           netMax={indicative_net_range.max}
         />
+
+        {/* Multi-Material Component Allocation Breakdown */}
+        {valuation.component_valuations && valuation.component_valuations.length > 0 && (
+          <div className="mt-6 p-4 rounded-2xl bg-slate-900/60 border border-slate-800">
+            <div className="flex items-center space-x-2 text-xs font-mono font-bold uppercase tracking-wider text-slate-400 mb-3">
+              <Layers className="w-4 h-4 text-cyan-400" />
+              <span>ILLUSTRATIVE COMPONENT ALLOCATION & BENCHMARK CONTRIBUTION</span>
+            </div>
+
+            <div className="space-y-2.5">
+              {valuation.component_valuations.map((cVal, idx) => (
+                <div
+                  key={idx}
+                  className="p-3 rounded-xl bg-slate-950/80 border border-slate-800/80 flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs"
+                >
+                  <div>
+                    <div className="flex items-center space-x-2">
+                      <span className="font-bold text-slate-100">{cVal.material_name}</span>
+                      <span className="text-[10px] font-mono text-cyan-300 bg-cyan-500/10 px-1.5 py-0.2 rounded border border-cyan-500/20">
+                        ~{cVal.estimated_share_percent}% visual share
+                      </span>
+                    </div>
+                    <div className="text-[11px] font-mono text-slate-400 mt-1">
+                      Illustrative Allocation: <strong className="text-slate-200">~{cVal.allocated_weight_kg} kg</strong> • Benchmark Rate: ₹{cVal.base_rate_range.min}–₹{cVal.base_rate_range.max}/kg
+                    </div>
+                  </div>
+
+                  <div className="flex items-center space-x-4 font-mono text-right flex-shrink-0">
+                    <div>
+                      <div className="text-[10px] text-slate-500 uppercase">Gross Clean</div>
+                      <div className="text-slate-300 font-semibold">{formatINR(cVal.clean_benchmark)}</div>
+                    </div>
+                    <div>
+                      <div className="text-[10px] text-amber-500 uppercase">Deduction</div>
+                      <div className="text-amber-400">-{formatINR(cVal.contamination_penalty)}</div>
+                    </div>
+                    <div>
+                      <div className="text-[10px] text-emerald-400 uppercase">Realizable</div>
+                      <div className="text-emerald-400 font-bold">
+                        ₹{cVal.indicative_net_range.min} – ₹{cVal.indicative_net_range.max}
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+
+            {/* Scientific Honesty Methodology Notice */}
+            <div className="mt-3 p-3 rounded-xl bg-slate-950/80 border border-slate-800 text-[11px] text-slate-400 font-mono leading-relaxed">
+              <strong className="text-slate-300">Methodology Notice:</strong> Component weight allocations are illustrative model projections derived by applying 2D visual surface shares to the total batch weighment. Because material bulk densities differ significantly (e.g. metals vs. thin films), physical dock sorting and scale weighment are required for commercial confirmation.
+            </div>
+
+            {/* Unresolved Economic Impact Disclosure */}
+            {valuation.unresolved_economic_impact && (
+              <div className="mt-3 p-2.5 rounded-xl bg-amber-500/10 border border-amber-500/20 text-[11px] text-amber-300/90 font-mono flex items-start space-x-2">
+                <Info className="w-4 h-4 text-amber-400 flex-shrink-0 mt-0.5" />
+                <span>{valuation.unresolved_economic_impact}</span>
+              </div>
+            )}
+          </div>
+        )}
 
         {/* Dynamic Weight Adjuster inside Value Screen */}
         <div className="mt-6 p-4 rounded-2xl bg-slate-900/40 border border-slate-800/80 flex flex-col sm:flex-row sm:items-center justify-between gap-4">

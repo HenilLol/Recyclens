@@ -127,7 +127,12 @@ export const App: React.FC = () => {
                 contamination={analysisResult.recovery_profile.contamination}
                 contaminationEvidence={analysisResult.recovery_profile.contamination_evidence}
               />
-              <CompositionBreakdown secondaryMaterials={analysisResult.recovery_profile.secondary_materials} />
+              <CompositionBreakdown
+                composition={analysisResult.recovery_profile.composition}
+                unresolvedFraction={analysisResult.recovery_profile.unresolved_fraction}
+                secondaryMaterials={analysisResult.recovery_profile.secondary_materials}
+                isFallback={analysisResult.recovery_profile.is_fallback_inference}
+              />
               <VisualReasoningBox
                 recoverability={analysisResult.recovery_profile.recoverability}
                 recommendedPreparation={analysisResult.recovery_profile.recommended_preparation}

@@ -59,6 +59,7 @@ export class MatchController {
         matches: matchResults.allMatches,
         eligible_matches: matchResults.eligibleMatches,
         incompatible_matches: matchResults.incompatibleMatches,
+        split_routes: matchResults.splitRoutes,
       });
     } catch (err: any) {
       return res.status(500).json({ error: 'Failed to recalculate matches.' });

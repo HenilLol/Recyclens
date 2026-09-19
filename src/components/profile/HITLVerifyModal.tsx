@@ -96,7 +96,7 @@ export const HITLVerifyModal: React.FC = () => {
             {/* Field 1: Material Correction */}
             <div>
               <label className="block text-xs font-mono font-semibold text-slate-300 mb-1">
-                Verified Material Classification
+                Operator-Confirmed Material Classification
               </label>
               <select
                 value={selectedMaterial}
@@ -115,7 +115,7 @@ export const HITLVerifyModal: React.FC = () => {
             <div>
               <label className="block text-xs font-mono font-semibold text-slate-300 mb-1 flex items-center space-x-1.5">
                 <Scale className="w-3.5 h-3.5 text-cyan-400" />
-                <span>Actual Measured Weight (kg) [Optional]</span>
+                <span>Physical Scale Weighment (kg) [Optional]</span>
               </label>
               <input
                 type="number"

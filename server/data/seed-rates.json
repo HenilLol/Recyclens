@@ -138,5 +138,19 @@
     "data_source_type": "CONFIGURED_DEMO",
     "source_label": "Configured regional scrap benchmark (Mumbai / MMR Cluster) • Baseline Q3 2026",
     "last_updated": "2026-09-15T08:00:00Z"
+  },
+  {
+    "id": "rate-pp-11",
+    "material_code": "PLASTIC_PP",
+    "display_name": "Polypropylene (PP) Caps, Closures & Molded Articles",
+    "category": "PLASTIC",
+    "rate_min": 28.0,
+    "rate_max": 34.0,
+    "unit": "kg",
+    "contamination_penalty_factor": 0.85,
+    "region": "IN_WEST_MUMBAI",
+    "data_source_type": "CONFIGURED_DEMO",
+    "source_label": "Configured regional scrap benchmark (Mumbai / MMR Cluster) • Baseline Q3 2026",
+    "last_updated": "2026-09-15T08:00:00Z"
   }
 ]

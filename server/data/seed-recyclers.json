@@ -13,7 +13,8 @@
     "accepted_materials": [
       "PLASTIC_PET",
       "PLASTIC_HDPE",
-      "PLASTIC_LDPE"
+      "PLASTIC_LDPE",
+      "PLASTIC_PP"
     ],
     "min_batch_weight_kg": 5.0,
     "max_contamination_tolerance": 25.0,

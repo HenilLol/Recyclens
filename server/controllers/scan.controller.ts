@@ -120,6 +120,8 @@ export class ScanController {
         contaminationPercentage: fullProfile.contamination.percentage,
         qualityGrade: fullProfile.recoverability.grade,
         isUserSpecifiedWeight,
+        composition: fullProfile.composition,
+        unresolvedSharePercent: fullProfile.unresolved_fraction?.estimated_share_percent,
       });
 
       // 4. Recycler Matching Calculation with Honest Default Location Label
@@ -133,6 +135,7 @@ export class ScanController {
         contaminationPercentage: fullProfile.contamination.percentage,
         userLocation: userLoc,
         valuation,
+        composition: fullProfile.composition,
       });
 
       const responsePayload: ScanAnalysisResponse = {
@@ -143,6 +146,7 @@ export class ScanController {
         matches: matchResults.allMatches,
         eligible_matches: matchResults.eligibleMatches,
         incompatible_matches: matchResults.incompatibleMatches,
+        split_routes: matchResults.splitRoutes,
         telemetry: {
           processing_time_ms: Date.now() - startTime,
           ai_engine: aiEngine,

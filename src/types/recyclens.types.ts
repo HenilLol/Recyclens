@@ -37,11 +37,83 @@ export interface DetectedMaterial {
   polymer_subtype?: string; // e.g. "PET (Type 1)", "HDPE (Type 2)"
 }
 
+export interface BatchComponent {
+  material: string;
+  material_code: string;
+  category: MaterialCategory;
+  estimated_share_percent: number; // 1 to 100 visual estimate
+  confidence: number; // 0 to 100 model visual confidence
+  polymer_subtype?: string;
+  visual_evidence: string[];
+  contamination_percent: number; // 0 to 100
+  recoverability_score: number; // 0 to 100
+  recoverability_grade: QualityGrade;
+  is_separable: boolean;
+  preparation_actions: string[];
+  uncertainty: string[];
+}
+
+export interface UnresolvedFraction {
+  estimated_share_percent: number; // Unresolved / visually ambiguous portion
+  visual_reason: string; // Factual visual reason why portion cannot be identified
+}
+
+export interface RecoveryDecision {
+  batch_archetype: string; // e.g. "Mixed Post-Consumer Packaging"
+  condition_summary: string;
+  recommended_action: string;
+  economic_effect: string;
+  routing_strategy: 'SINGLE_FACILITY' | 'SPLIT_ROUTING' | 'SPECIALIZED_DISPOSAL';
+  routing_rationale: string;
+}
+
+export interface ComponentValuation {
+  material_code: string;
+  material_name: string;
+  estimated_share_percent: number; // Estimated visual surface area share
+  allocated_weight_kg: number; // Illustrative mass allocation based on visual share projection
+  illustrative_weight_kg: number; // Explicitly named alias for scientific clarity
+  weight_allocation_basis: 'ILLUSTRATIVE_VISUAL_PROJECTION';
+  allocation_disclosure: string; // Scientific honesty disclosure: visual share != physical mass
+  base_rate_range: {
+    min: number;
+    max: number;
+  };
+  clean_benchmark: number;
+  contamination_penalty: number;
+  indicative_net_range: {
+    min: number;
+    max: number;
+  };
+  notes: string;
+}
+
+export interface SplitRouteRecommendation {
+  material_code: string;
+  material_name: string;
+  allocated_weight_kg: number; // Illustrative projected channel mass
+  illustrative_weight_kg: number; // Explicit alias for clarity
+  is_provisional: boolean; // true — route is provisional until physical segregation & weighment
+  routing_status: 'PROVISIONAL_SPLIT_ROUTE';
+  quantity_basis_disclosure: string; // Disclosure that channel weight is projected from visual share
+  suggested_recycler_id?: string;
+  suggested_recycler_name?: string;
+  target_facility_type: string;
+  estimated_payout_range: {
+    min: number;
+    max: number;
+  };
+  preparation_required: string[];
+}
+
 export interface RecoveryProfile {
   id: string;
   scan_id: string;
   primary_material: DetectedMaterial;
   secondary_materials: SecondaryMaterial[];
+  composition: BatchComponent[]; // Phase 3 multi-material breakdown
+  unresolved_fraction?: UnresolvedFraction; // Remainder if composition < 100%
+  recovery_decision?: RecoveryDecision; // Synthesized operational dispatch decision
   contamination: ContaminationInfo;
   recoverability: RecoverabilityInfo;
   visual_explanation: string;
@@ -86,6 +158,9 @@ export interface ValuationBreakdown {
     min: number;
     max: number;
   };
+  component_valuations?: ComponentValuation[]; // Multi-material component weight & benchmark breakdown
+  unresolved_economic_impact?: string; // Disclosure of economic impact from unresolved fraction
+  valuation_methodology?: string; // Explicit disclosure of visual-share projection methodology
   price_disclaimer: string;
   data_source_label: string;
   is_estimate: boolean;
@@ -147,6 +222,7 @@ export interface ScanAnalysisResponse {
   matches: RecyclerMatch[];
   eligible_matches: RecyclerMatch[];
   incompatible_matches: RecyclerMatch[];
+  split_routes?: SplitRouteRecommendation[]; // Multi-material split route routing
   telemetry: {
     processing_time_ms: number;
     ai_engine: string;
