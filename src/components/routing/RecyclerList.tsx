@@ -1,11 +1,11 @@
 import React, { useState } from 'react';
 import { useRecyclensStore } from '../../store/useRecyclensStore.ts';
 import { RecyclerCard } from './RecyclerCard.tsx';
-import { Truck, Filter, Shield, AlertTriangle, CheckCircle2, Split, ArrowUpRight } from 'lucide-react';
+import { Truck, Filter, Shield, AlertTriangle, CheckCircle2, Split, ArrowUpRight, ShieldCheck, ArrowRight } from 'lucide-react';
 import { RecyclerMatch } from '../../types/recyclens.types.ts';
 
 export const RecyclerList: React.FC = () => {
-  const { analysisResult } = useRecyclensStore();
+  const { analysisResult, generatePassportForCurrentBatch, isGeneratingPassport } = useRecyclensStore();
   const [filterPickupOnly, setFilterPickupOnly] = useState(false);
   const [sortBy, setSortBy] = useState<'score' | 'distance' | 'payout'>('score');
 
@@ -193,6 +193,35 @@ export const RecyclerList: React.FC = () => {
           </div>
         </div>
       )}
+
+      {/* SECTION 3: RECOVERY PASSPORT ACTION BANNER */}
+      <div className="p-6 rounded-3xl hud-glass border border-emerald-500/40 bg-gradient-to-r from-emerald-950/40 via-slate-900/60 to-teal-950/40 flex flex-col sm:flex-row items-center justify-between gap-4 shadow-xl">
+        <div className="space-y-1 text-center sm:text-left">
+          <div className="flex items-center justify-center sm:justify-start space-x-2">
+            <ShieldCheck className="w-5 h-5 text-emerald-400" />
+            <span className="text-xs font-mono font-bold text-emerald-400 uppercase tracking-wider">
+              Cryptographic Integrity Snapshot
+            </span>
+          </div>
+          <h4 className="text-base sm:text-lg font-bold text-slate-100 font-['Outfit']">
+            Ready to generate Recovery Passport?
+          </h4>
+          <p className="text-xs text-slate-400 max-w-xl">
+            Freeze material composition, selected optimization scenario, and routing recommendations into a SHA-256 integrity-verified snapshot ready for operational dispatch.
+          </p>
+        </div>
+
+        <button
+          type="button"
+          disabled={isGeneratingPassport}
+          onClick={() => generatePassportForCurrentBatch(eligibleMatches[0])}
+          className="w-full sm:w-auto px-6 py-3 rounded-2xl bg-gradient-to-r from-emerald-500 to-teal-400 hover:from-emerald-400 hover:to-teal-300 text-slate-950 font-extrabold text-xs sm:text-sm shadow-lg shadow-emerald-500/20 flex items-center justify-center space-x-2 transition-transform hover:scale-105 active:scale-95 flex-shrink-0"
+        >
+          <ShieldCheck className="w-4 h-4" />
+          <span>{isGeneratingPassport ? 'Issuing Passport...' : 'Issue Recovery Passport'}</span>
+          <ArrowRight className="w-4 h-4" />
+        </button>
+      </div>
     </div>
   );
 };

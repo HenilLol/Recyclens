@@ -480,3 +480,139 @@ export interface CreatePassportInput {
     indicative_payout_range?: { min: number; max: number };
   };
 }
+
+// ==================================================
+// PHASE 5.2 — SCENARIO-AWARE DISPATCH MANIFEST
+// ==================================================
+
+export interface DispatchChecklistItem {
+  action_id: string;
+  title: string;
+  required: boolean;
+  rationale: string;
+  observed_basis?: string;
+  completed?: boolean;
+}
+
+export interface DispatchMaterialFraction {
+  material_code: string;
+  name: string;
+  category: MaterialCategory;
+  estimated_share_percent: number;
+  estimated_weight_kg: number;
+}
+
+export interface RecoveryDispatchManifest {
+  manifest_id: string; // Format: DSP-YYYY-<16 HEX CHARACTERS>
+  passport_id: string;
+  scan_id: string;
+  created_at: string; // ISO 8601
+  selected_scenario_id: string;
+  selected_scenario_type: ScenarioType | 'NONE';
+  scenario_title: string;
+  target_facility: {
+    facility_id?: string;
+    facility_name: string;
+    route_type: 'SINGLE_FACILITY' | 'SPLIT_ROUTING' | 'SPECIALIZED_DISPOSAL';
+    contact_phone?: string;
+    address?: string;
+  };
+  material_breakdown: DispatchMaterialFraction[];
+  batch_weight_kg: number;
+  weight_provenance: WeightProvenance;
+  preparation_checklist: DispatchChecklistItem[];
+  handling_precautions: string[];
+  modeled_expectations: {
+    projected_contamination_percent: number;
+    projected_recoverability_grade: QualityGrade;
+    projected_indicative_net_range: {
+      min: number;
+      max: number;
+      currency: string;
+    };
+  };
+  dispatch_disclosure: string;
+}
+
+export interface CreateDispatchInput {
+  passport: BatchRecoveryPassport;
+  override_facility_id?: string;
+  override_facility_name?: string;
+  handling_notes?: string[];
+}
+
+// ==================================================
+// PHASE 5.3 — DOCK INTAKE RECONCILIATION
+// ==================================================
+
+export interface FractionDisposition {
+  material_code: string;
+  material_name?: string;
+  disposition_status: 'ACCEPTED' | 'REJECTED' | 'DOWNGRADED';
+  weighed_weight_kg?: number;
+  rejection_reason?: string;
+}
+
+export interface DockIntakeRecord {
+  passport_id: string;
+  manifest_id?: string;
+  recorded_at: string; // ISO 8601
+  actual_intake_weight_kg: number;
+  weight_provenance: 'USER_CONFIRMED_SCALE_WEIGHMENT';
+  operator_observed_contamination_percent: number;
+  preparation_completion_status: 'NOT_PREPARED' | 'PARTIALLY_PREPARED' | 'FULLY_PREPARED';
+  fraction_dispositions: FractionDisposition[];
+  unexpected_materials?: string[];
+  operator_notes?: string;
+}
+
+export interface WeightReconciliationResult {
+  projected_weight_kg: number;
+  projected_provenance: WeightProvenance;
+  actual_intake_weight_kg: number;
+  actual_provenance: 'USER_CONFIRMED_SCALE_WEIGHMENT';
+  variance_kg: number;
+  variance_percent: number;
+  variance_category: 'MATCH' | 'SURPLUS' | 'DEFICIT';
+  uncertainty_explanations: string[];
+}
+
+export interface QualityReconciliationResult {
+  projected_contamination_percent: number;
+  actual_contamination_percent: number;
+  contamination_variance_points: number;
+  preparation_expected: string;
+  preparation_observed: 'NOT_PREPARED' | 'PARTIALLY_PREPARED' | 'FULLY_PREPARED';
+  accepted_fractions_count: number;
+  rejected_fractions_count: number;
+  unexpected_materials_flagged: string[];
+}
+
+export interface EconomicReconciliationResult {
+  projected_indicative_net_range: { min: number; max: number };
+  realized_indicative_net_range: { min: number; max: number };
+  variance_indicative_midpoint: number;
+  currency: 'INR';
+  economic_note: string;
+}
+
+export interface IntakeReconciliationReport {
+  reconciliation_id: string; // Format: REC-YYYY-<16 HEX CHARACTERS>
+  passport_id: string;
+  manifest_id?: string;
+  reconciled_at: string; // ISO 8601
+  passport_integrity_status: {
+    is_valid: boolean;
+    details: string;
+  };
+  weight_reconciliation: WeightReconciliationResult;
+  quality_reconciliation: QualityReconciliationResult;
+  economic_reconciliation: EconomicReconciliationResult;
+  reconciliation_disclosure: string;
+}
+
+export interface ReconcileIntakeInput {
+  passport: BatchRecoveryPassport;
+  manifest?: RecoveryDispatchManifest;
+  intake: DockIntakeRecord;
+}

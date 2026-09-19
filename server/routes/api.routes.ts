@@ -4,6 +4,8 @@ import { ratesController } from '../controllers/rates.controller.ts';
 import { matchController } from '../controllers/match.controller.ts';
 import { feedbackController } from '../controllers/feedback.controller.ts';
 import { passportController } from '../controllers/passport.controller.ts';
+import { dispatchController } from '../controllers/dispatch.controller.ts';
+import { reconciliationController } from '../controllers/reconciliation.controller.ts';
 import { aiVisionService } from '../services/ai-vision.service.ts';
 
 const router = Router();
@@ -36,5 +38,11 @@ router.get('/feedback/history', (req, res) => feedbackController.getFeedbackHist
 
 // Recovery Passport (Phase 5.1)
 router.post('/passport/create', (req, res) => passportController.createPassport(req, res));
+
+// Operational Dispatch Manifest (Phase 5.2)
+router.post('/dispatch/manifest', (req, res) => dispatchController.createManifest(req, res));
+
+// Dock Intake Reconciliation (Phase 5.3)
+router.post('/reconciliation/report', (req, res) => reconciliationController.reconcileIntake(req, res));
 
 export default router;

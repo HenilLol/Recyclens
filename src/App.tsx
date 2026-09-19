@@ -27,6 +27,10 @@ import { RecyclerList } from './components/routing/RecyclerList.tsx';
 import { ExplainableRadarModal } from './components/routing/ExplainableRadarModal.tsx';
 import { DispatchModal } from './components/routing/DispatchModal.tsx';
 
+// Screen 5 & 6 Components (Phase 5.1, 5.2, 5.3)
+import { RecoveryPassportView } from './components/passport/RecoveryPassportView.tsx';
+import { DockReconciliationView } from './components/reconciliation/DockReconciliationView.tsx';
+
 import { Sparkles, ArrowRight, ArrowLeft, AlertCircle } from 'lucide-react';
 
 export const App: React.FC = () => {
@@ -206,6 +210,62 @@ export const App: React.FC = () => {
               >
                 <ArrowLeft className="w-4 h-4" />
                 <span>Back to Valuation</span>
+              </button>
+
+              <button
+                type="button"
+                onClick={() => setStep(5)}
+                className="px-6 py-2.5 rounded-xl bg-gradient-to-r from-emerald-500 to-teal-400 hover:from-emerald-400 hover:to-teal-300 text-slate-950 text-xs sm:text-sm font-bold shadow-lg shadow-emerald-500/20 flex items-center space-x-2 transition-transform hover:scale-105"
+              >
+                <span>View Recovery Passport</span>
+                <ArrowRight className="w-4 h-4" />
+              </button>
+            </div>
+          </div>
+        )}
+
+        {/* SCREEN 5: RECOVERY PASSPORT & OPERATIONAL DISPATCH (PHASE 5.1 & 5.2) */}
+        {currentStep === 5 && (
+          <div className="space-y-6 animate-fade-in">
+            <RecoveryPassportView />
+
+            {/* Navigation Footer */}
+            <div className="p-4 rounded-2xl hud-glass border border-slate-800 flex items-center justify-between">
+              <button
+                type="button"
+                onClick={() => setStep(4)}
+                className="px-4 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-xs font-semibold text-slate-300 flex items-center space-x-1.5 transition-all"
+              >
+                <ArrowLeft className="w-4 h-4" />
+                <span>Back to Route Selection</span>
+              </button>
+
+              <button
+                type="button"
+                onClick={() => setStep(6)}
+                className="px-6 py-2.5 rounded-xl bg-gradient-to-r from-purple-500 to-indigo-500 hover:from-purple-400 hover:to-indigo-400 text-slate-950 text-xs sm:text-sm font-bold shadow-lg shadow-purple-500/20 flex items-center space-x-2 transition-transform hover:scale-105"
+              >
+                <span>Proceed to Dock Intake Reconciliation</span>
+                <ArrowRight className="w-4 h-4" />
+              </button>
+            </div>
+          </div>
+        )}
+
+        {/* SCREEN 6: DOCK INTAKE RECONCILIATION (PHASE 5.3) */}
+        {currentStep === 6 && (
+          <div className="space-y-6 animate-fade-in">
+            <DockReconciliationView />
+
+            {/* Navigation Footer */}
+            <div className="p-4 rounded-2xl hud-glass border border-slate-800 flex items-center justify-between">
+              <button
+                type="button"
+                onClick={() => setStep(5)}
+                className="px-4 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-xs font-semibold text-slate-300 flex items-center space-x-1.5 transition-all"
+              >
+                <ArrowLeft className="w-4 h-4" />
+                <span>Back to Recovery Passport</span>
               </button>
 
               <button

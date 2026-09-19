@@ -9,7 +9,7 @@ interface RecyclerCardProps {
 }
 
 export const RecyclerCard: React.FC<RecyclerCardProps> = ({ match, rank }) => {
-  const { openRadarModal, openDispatchModal } = useRecyclensStore();
+  const { openRadarModal, openDispatchModal, generatePassportForCurrentBatch, isGeneratingPassport } = useRecyclensStore();
   const { recycler, is_eligible, total_score, distance_km, estimated_payout_range, pickup_offered, match_reasons, warnings } = match;
 
   const isTopMatch = rank === 1 && total_score >= 80 && is_eligible;
@@ -142,14 +142,28 @@ export const RecyclerCard: React.FC<RecyclerCardProps> = ({ match, rank }) => {
             </button>
 
             {is_eligible && (
-              <button
-                type="button"
-                onClick={() => openDispatchModal(match)}
-                className="px-4 py-2 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-bold text-xs shadow-md shadow-emerald-500/20 flex items-center space-x-1.5 transition-transform active:scale-95"
-              >
-                <span>Simulate Dispatch</span>
-                <ArrowRight className="w-3.5 h-3.5" />
-              </button>
+              <>
+                <button
+                  type="button"
+                  onClick={() => openDispatchModal(match)}
+                  className="px-3 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 font-bold text-xs border border-slate-700 flex items-center space-x-1.5 transition-all"
+                  title="Simulate Dispatch Estimate"
+                >
+                  <Truck className="w-3.5 h-3.5 text-slate-400" />
+                  <span>Simulate</span>
+                </button>
+
+                <button
+                  type="button"
+                  disabled={isGeneratingPassport}
+                  onClick={() => generatePassportForCurrentBatch(match)}
+                  className="px-4 py-2 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-bold text-xs shadow-md shadow-emerald-500/20 flex items-center space-x-1.5 transition-transform active:scale-95"
+                >
+                  <ShieldCheck className="w-3.5 h-3.5" />
+                  <span>{isGeneratingPassport ? 'Issuing...' : 'Issue Passport'}</span>
+                  <ArrowRight className="w-3.5 h-3.5" />
+                </button>
+              </>
             )}
           </div>
         </div>

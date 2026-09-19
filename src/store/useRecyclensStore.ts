@@ -4,6 +4,10 @@ import {
   PresetScenario,
   RecyclerMatch,
   FeedbackSubmission,
+  BatchRecoveryPassport,
+  RecoveryDispatchManifest,
+  IntakeReconciliationReport,
+  DockIntakeRecord,
 } from '../types/recyclens.types.ts';
 import {
   analyzeWasteScan,
@@ -11,11 +15,14 @@ import {
   checkServerHealth,
   recalculateMatch,
   submitHITLFeedback,
+  createRecoveryPassport,
+  generateDispatchManifest,
+  reconcileDockIntake,
 } from '../utils/api.ts';
 import confetti from 'canvas-confetti';
 
 interface RecyclensState {
-  currentStep: 1 | 2 | 3 | 4;
+  currentStep: 1 | 2 | 3 | 4 | 5 | 6;
   currentImage: string | null;
   selectedPreset: PresetScenario | null;
   weightKg: number;
@@ -31,9 +38,17 @@ interface RecyclensState {
   serverHealth: { status: string; ai_vision_configured: boolean; version: string } | null;
   error: string | null;
 
+  // Phase 5.2 & 5.3 Operational State
+  currentPassport: BatchRecoveryPassport | null;
+  currentDispatchManifest: RecoveryDispatchManifest | null;
+  currentReconciliationReport: IntakeReconciliationReport | null;
+  isGeneratingPassport: boolean;
+  isGeneratingManifest: boolean;
+  isReconciling: boolean;
+
   // Actions
   initialize: () => Promise<void>;
-  setStep: (step: 1 | 2 | 3 | 4) => void;
+  setStep: (step: 1 | 2 | 3 | 4 | 5 | 6) => void;
   setImage: (imageData: string | null) => void;
   setWeightKg: (weight: number) => void;
   setUserLocation: (loc: { lat: number; lng: number; label: string }) => void;
@@ -48,6 +63,9 @@ interface RecyclensState {
   openHITLModal: () => void;
   closeHITLModal: () => void;
   submitFeedback: (data: Omit<FeedbackSubmission, 'scan_id'>) => Promise<void>;
+  generatePassportForCurrentBatch: (selectedRecycler?: RecyclerMatch) => Promise<BatchRecoveryPassport | null>;
+  generateDispatchForCurrentPassport: (overrideFacilityName?: string) => Promise<RecoveryDispatchManifest | null>;
+  submitDockIntakeReconciliation: (intakeData: Omit<DockIntakeRecord, 'passport_id'>) => Promise<IntakeReconciliationReport | null>;
   resetToScan: () => void;
 }
 
@@ -67,6 +85,14 @@ export const useRecyclensStore = create<RecyclensState>((set, get) => ({
   presets: [],
   serverHealth: null,
   error: null,
+
+  // Phase 5.2 & 5.3 Operational State
+  currentPassport: null,
+  currentDispatchManifest: null,
+  currentReconciliationReport: null,
+  isGeneratingPassport: false,
+  isGeneratingManifest: false,
+  isReconciling: false,
 
   initialize: async () => {
     try {
@@ -226,12 +252,127 @@ export const useRecyclensStore = create<RecyclensState>((set, get) => ({
     set({ isHITLModalOpen: false });
   },
 
+  generatePassportForCurrentBatch: async (selectedRecycler) => {
+    const { analysisResult, weightKg, selectedScenarioId } = get();
+    if (!analysisResult) return null;
+
+    set({ isGeneratingPassport: true, error: null });
+    try {
+      // Find selected scenario if any
+      const selectedScenario = analysisResult.optimization_scenarios?.find(
+        (s) => s.scenario_id === selectedScenarioId
+      );
+
+      // Choose recycler route
+      const routeRecycler = selectedRecycler || analysisResult.eligible_matches?.[0] || analysisResult.matches?.[0];
+
+      const res = await createRecoveryPassport({
+        scan_id: analysisResult.scan_id,
+        recovery_profile: analysisResult.recovery_profile,
+        weight_kg: weightKg,
+        weight_provenance: 'ILLUSTRATIVE_VISUAL_PROJECTION',
+        selected_scenario: selectedScenario,
+        selected_route: routeRecycler ? {
+          routing_status: 'RECOMMENDED',
+          selected_facility_id: routeRecycler.recycler.id,
+          selected_facility_name: routeRecycler.recycler.name,
+          route_type: (analysisResult.recovery_profile.recovery_decision?.routing_strategy as any) || 'SINGLE_FACILITY',
+          split_routes: analysisResult.split_routes,
+          routing_rationale: routeRecycler.match_reasons?.[0] || routeRecycler.recycler.tagline || 'Selected optimal regional recovery facility',
+          preparation_requirements: analysisResult.recovery_profile.recommended_preparation,
+          indicative_payout_range: routeRecycler.estimated_payout_range,
+        } : undefined,
+      });
+
+      set({
+        currentPassport: res.passport,
+        isGeneratingPassport: false,
+        currentStep: 5,
+      });
+
+      return res.passport;
+    } catch (err: any) {
+      console.error('Passport generation error:', err);
+      set({
+        isGeneratingPassport: false,
+        error: err.message || 'Failed to generate Recovery Passport.',
+      });
+      return null;
+    }
+  },
+
+  generateDispatchForCurrentPassport: async (overrideFacilityName) => {
+    const { currentPassport } = get();
+    if (!currentPassport) return null;
+
+    set({ isGeneratingManifest: true, error: null });
+    try {
+      const res = await generateDispatchManifest({
+        passport: currentPassport,
+        override_facility_name: overrideFacilityName,
+      });
+
+      set({
+        currentDispatchManifest: res.manifest,
+        isGeneratingManifest: false,
+      });
+
+      return res.manifest;
+    } catch (err: any) {
+      console.error('Dispatch manifest error:', err);
+      set({
+        isGeneratingManifest: false,
+        error: err.message || 'Failed to generate dispatch manifest.',
+      });
+      return null;
+    }
+  },
+
+  submitDockIntakeReconciliation: async (intakeData) => {
+    const { currentPassport, currentDispatchManifest } = get();
+    if (!currentPassport) return null;
+
+    set({ isReconciling: true, error: null });
+    try {
+      const res = await reconcileDockIntake({
+        passport: currentPassport,
+        manifest: currentDispatchManifest || undefined,
+        intake: {
+          passport_id: currentPassport.passport_id,
+          manifest_id: currentDispatchManifest?.manifest_id,
+          ...intakeData,
+        },
+      });
+
+      set({
+        currentReconciliationReport: res.report,
+        isReconciling: false,
+        currentStep: 6,
+      });
+
+      return res.report;
+    } catch (err: any) {
+      console.error('Reconciliation error:', err);
+      set({
+        isReconciling: false,
+        error: err.message || 'Failed to execute dock intake reconciliation.',
+      });
+      return null;
+    }
+  },
+
   resetToScan: () =>
     set({
       currentStep: 1,
       currentImage: null,
       selectedPreset: null,
       analysisResult: null,
+      currentPassport: null,
+      currentDispatchManifest: null,
+      currentReconciliationReport: null,
+      selectedRecyclerForRadar: null,
+      selectedRecyclerForDispatch: null,
+      selectedScenarioId: null,
       error: null,
     }),
 }));

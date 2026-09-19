@@ -1,32 +1,41 @@
 import React from 'react';
 import { useRecyclensStore } from '../../store/useRecyclensStore.ts';
-import { Camera, Eye, DollarSign, Truck, Check } from 'lucide-react';
+import { Camera, Eye, DollarSign, Truck, ShieldCheck, Scale, Check } from 'lucide-react';
 import clsx from 'clsx';
 
 export const StepIndicator: React.FC = () => {
-  const { currentStep, setStep, analysisResult } = useRecyclensStore();
+  const { currentStep, setStep, analysisResult, currentPassport, currentReconciliationReport } = useRecyclensStore();
 
   const steps = [
     { number: 1, title: 'Scan Batch', icon: Camera, desc: 'Image & Input' },
-    { number: 2, title: 'AI Recovery Profile', icon: Eye, desc: 'Material & Contamination' },
-    { number: 3, title: 'Value & Optimize', icon: DollarSign, desc: 'Yield & What-If Modeling' },
-    { number: 4, title: 'Best Recovery Route', icon: Truck, desc: 'Recycler Matching' },
+    { number: 2, title: 'AI Profile', icon: Eye, desc: 'Material & Evidence' },
+    { number: 3, title: 'Optimize', icon: DollarSign, desc: 'What-If Scenarios' },
+    { number: 4, title: 'Route', icon: Truck, desc: 'Recycler Matching' },
+    { number: 5, title: 'Passport', icon: ShieldCheck, desc: 'Integrity & Dispatch' },
+    { number: 6, title: 'Reconcile', icon: Scale, desc: 'Dock Intake & Variance' },
   ];
 
   return (
     <div className="w-full py-4">
-      <div className="max-w-4xl mx-auto grid grid-cols-2 md:grid-cols-4 gap-2 sm:gap-4">
+      <div className="max-w-6xl mx-auto grid grid-cols-3 md:grid-cols-6 gap-2 sm:gap-3">
         {steps.map((step) => {
           const Icon = step.icon;
           const isActive = currentStep === step.number;
-          const isCompleted = currentStep > step.number || (analysisResult !== null && step.number <= 4);
-          const isClickable = analysisResult !== null || step.number === 1;
+          const isCompleted =
+            currentStep > step.number ||
+            (step.number === 5 && currentPassport !== null && currentStep > 5) ||
+            (step.number === 6 && currentReconciliationReport !== null);
+          const isClickable =
+            step.number === 1 ||
+            (analysisResult !== null && step.number <= 4) ||
+            (currentPassport !== null && step.number === 5) ||
+            (currentPassport !== null && step.number === 6);
 
           return (
             <button
               key={step.number}
               disabled={!isClickable}
-              onClick={() => isClickable && setStep(step.number as 1 | 2 | 3 | 4)}
+              onClick={() => isClickable && setStep(step.number as 1 | 2 | 3 | 4 | 5 | 6)}
               className={clsx(
                 'relative flex flex-col p-3 rounded-xl border text-left transition-all duration-200',
                 isActive

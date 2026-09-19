@@ -1,4 +1,14 @@
-import { ScanAnalysisResponse, PresetScenario, FeedbackSubmission } from '../types/recyclens.types.ts';
+import {
+  ScanAnalysisResponse,
+  PresetScenario,
+  FeedbackSubmission,
+  CreatePassportInput,
+  BatchRecoveryPassport,
+  CreateDispatchInput,
+  RecoveryDispatchManifest,
+  ReconcileIntakeInput,
+  IntakeReconciliationReport,
+} from '../types/recyclens.types.ts';
 
 const API_BASE = '/api';
 
@@ -91,6 +101,63 @@ export async function submitHITLFeedback(feedback: FeedbackSubmission): Promise<
 
   if (!res.ok) {
     throw new Error(`Feedback submission failed with status ${res.status}`);
+  }
+
+  return await res.json();
+}
+
+export async function createRecoveryPassport(payload: CreatePassportInput): Promise<{
+  success: boolean;
+  message: string;
+  passport: BatchRecoveryPassport;
+}> {
+  const res = await fetch(`${API_BASE}/passport/create`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(payload),
+  });
+
+  if (!res.ok) {
+    const errorBody = await res.json().catch(() => ({}));
+    throw new Error(errorBody.message || errorBody.error || `Failed to create passport: HTTP ${res.status}`);
+  }
+
+  return await res.json();
+}
+
+export async function generateDispatchManifest(payload: CreateDispatchInput): Promise<{
+  success: boolean;
+  message: string;
+  manifest: RecoveryDispatchManifest;
+}> {
+  const res = await fetch(`${API_BASE}/dispatch/manifest`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(payload),
+  });
+
+  if (!res.ok) {
+    const errorBody = await res.json().catch(() => ({}));
+    throw new Error(errorBody.message || errorBody.error || `Failed to generate dispatch manifest: HTTP ${res.status}`);
+  }
+
+  return await res.json();
+}
+
+export async function reconcileDockIntake(payload: ReconcileIntakeInput): Promise<{
+  success: boolean;
+  message: string;
+  report: IntakeReconciliationReport;
+}> {
+  const res = await fetch(`${API_BASE}/reconciliation/report`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(payload),
+  });
+
+  if (!res.ok) {
+    const errorBody = await res.json().catch(() => ({}));
+    throw new Error(errorBody.message || errorBody.error || `Failed to generate reconciliation report: HTTP ${res.status}`);
   }
 
   return await res.json();
