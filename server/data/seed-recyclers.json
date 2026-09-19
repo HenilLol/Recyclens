@@ -1,0 +1,156 @@
+[
+  {
+    "id": "rec-mumbai-01",
+    "name": "EcoPolymer Recovery Hub (Archetype)",
+    "badge": "Demo Polymer Facility Archetype",
+    "tagline": "Simulated industrial optical polymer sorting & hot-wash pelletizing plant archetype",
+    "address": "TTC Industrial Zone, Navi Mumbai (Simulated Node)",
+    "location": {
+      "lat": 19.0833,
+      "lng": 73.0112,
+      "city": "Navi Mumbai"
+    },
+    "accepted_materials": [
+      "PLASTIC_PET",
+      "PLASTIC_HDPE",
+      "PLASTIC_LDPE"
+    ],
+    "min_batch_weight_kg": 5.0,
+    "max_contamination_tolerance": 25.0,
+    "pickup_available": true,
+    "service_radius_km": 30.0,
+    "verification_status": "DEMO_ARCHETYPE",
+    "indicative_payout_multiplier": 1.06,
+    "contact_phone": "Demo Line: +91 022-DEMO-POLY",
+    "contact_email": "intake-demo@ecopolymer-sim.local",
+    "rating": 4.9,
+    "operating_hours": "Demo Hours: 08:00 - 19:00"
+  },
+  {
+    "id": "rec-mumbai-02",
+    "name": "GreenPulp Fiber Mills (Archetype)",
+    "badge": "Demo Fiber Mill Archetype",
+    "tagline": "Simulated industrial de-inking, OCC hydrapulping & kraft board conversion archetype",
+    "address": "Asalpha Industrial Estate, Ghatkopar West (Simulated Node)",
+    "location": {
+      "lat": 19.0988,
+      "lng": 72.8953,
+      "city": "Mumbai Suburban"
+    },
+    "accepted_materials": [
+      "PAPER_CARDBOARD",
+      "PAPER_MIXED"
+    ],
+    "min_batch_weight_kg": 10.0,
+    "max_contamination_tolerance": 20.0,
+    "pickup_available": true,
+    "service_radius_km": 20.0,
+    "verification_status": "DEMO_ARCHETYPE",
+    "indicative_payout_multiplier": 1.03,
+    "contact_phone": "Demo Line: +91 022-DEMO-PULP",
+    "contact_email": "collections-demo@greenpulp-sim.local",
+    "rating": 4.7,
+    "operating_hours": "Demo Hours: 09:00 - 18:30"
+  },
+  {
+    "id": "rec-mumbai-03",
+    "name": "MetalloSmelt Secondary Smelters (Archetype)",
+    "badge": "Demo Smelter Archetype",
+    "tagline": "Simulated induction furnace non-ferrous refining & UBC aluminium ingot casting archetype",
+    "address": "Kolshet Industrial Corridor, Thane West (Simulated Node)",
+    "location": {
+      "lat": 19.2274,
+      "lng": 72.9839,
+      "city": "Thane"
+    },
+    "accepted_materials": [
+      "METAL_ALUMINIUM",
+      "METAL_STEEL"
+    ],
+    "min_batch_weight_kg": 3.0,
+    "max_contamination_tolerance": 30.0,
+    "pickup_available": true,
+    "service_radius_km": 35.0,
+    "verification_status": "DEMO_ARCHETYPE",
+    "indicative_payout_multiplier": 1.05,
+    "contact_phone": "Demo Line: +91 022-DEMO-METL",
+    "contact_email": "scrap-demo@metallosmelt-sim.local",
+    "rating": 4.8,
+    "operating_hours": "Demo Hours: 07:00 - 20:00"
+  },
+  {
+    "id": "rec-mumbai-04",
+    "name": "CircuTech E-Waste Refiners (Archetype)",
+    "badge": "Demo E-Waste Refiner Archetype",
+    "tagline": "Simulated precious metal hydrometallurgical recovery & IT asset disposition archetype",
+    "address": "SEEPZ Electronic Complex, Andheri East (Simulated Node)",
+    "location": {
+      "lat": 19.1238,
+      "lng": 72.8762,
+      "city": "Mumbai Western Suburbs"
+    },
+    "accepted_materials": [
+      "EWASTE_PCB"
+    ],
+    "min_batch_weight_kg": 1.0,
+    "max_contamination_tolerance": 40.0,
+    "pickup_available": true,
+    "service_radius_km": 40.0,
+    "verification_status": "DEMO_ARCHETYPE",
+    "indicative_payout_multiplier": 1.08,
+    "contact_phone": "Demo Line: +91 022-DEMO-EWST",
+    "contact_email": "intake-demo@circutech-sim.local",
+    "rating": 4.9,
+    "operating_hours": "Demo Hours: 09:30 - 18:00"
+  },
+  {
+    "id": "rec-mumbai-05",
+    "name": "Apex Glass Cullet Aggregates (Archetype)",
+    "badge": "Demo Cullet Facility Archetype",
+    "tagline": "Simulated optical color sortation & container glass cullet manufacturing archetype",
+    "address": "Kherwadi Sector, Bandra East (Simulated Node)",
+    "location": {
+      "lat": 19.0596,
+      "lng": 72.8485,
+      "city": "Mumbai Central"
+    },
+    "accepted_materials": [
+      "GLASS_CULLET"
+    ],
+    "min_batch_weight_kg": 20.0,
+    "max_contamination_tolerance": 15.0,
+    "pickup_available": false,
+    "service_radius_km": 15.0,
+    "verification_status": "SIMULATION_FACILITY",
+    "indicative_payout_multiplier": 1.0,
+    "contact_phone": "Demo Line: +91 022-DEMO-GLAS",
+    "contact_email": "apexglass-demo@sim.local",
+    "rating": 4.2,
+    "operating_hours": "Demo Hours: 08:30 - 17:30"
+  },
+  {
+    "id": "rec-mumbai-06",
+    "name": "TexCycle Fiber Shredding Works (Archetype)",
+    "badge": "Demo Textile Mill Archetype",
+    "tagline": "Simulated mechanical garnetting & rag fiber spinning for acoustic insulation archetype",
+    "address": "Turbhe MIDC Sector, Navi Mumbai (Simulated Node)",
+    "location": {
+      "lat": 19.0718,
+      "lng": 73.0035,
+      "city": "Navi Mumbai"
+    },
+    "accepted_materials": [
+      "TEXTILE_COTTON"
+    ],
+    "min_batch_weight_kg": 15.0,
+    "max_contamination_tolerance": 18.0,
+    "pickup_available": true,
+    "service_radius_km": 25.0,
+    "verification_status": "SIMULATION_FACILITY",
+    "indicative_payout_multiplier": 0.98,
+    "contact_phone": "Demo Line: +91 022-DEMO-TEXT",
+    "contact_email": "orders-demo@texcycle-sim.local",
+    "rating": 4.3,
+    "operating_hours": "Demo Hours: 09:00 - 18:00"
+  }
+]

@@ -1,0 +1,83 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --color-hud-bg: #080C14;
+    --color-hud-card: #0E1626;
+  }
+
+  body {
+    background-color: #080C14;
+    color: #F1F5F9;
+    font-family: 'Inter', system-ui, sans-serif;
+    overflow-x: hidden;
+  }
+
+  /* Custom scrollbar */
+  ::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+  }
+  ::-webkit-scrollbar-track {
+    background: #080C14;
+  }
+  ::-webkit-scrollbar-thumb {
+    background: #1E2F4D;
+    border-radius: 9999px;
+  }
+  ::-webkit-scrollbar-thumb:hover {
+    background: #10B981;
+  }
+}
+
+/* Glassmorphism & Cyber HUD Utilities */
+.hud-glass {
+  background: rgba(14, 22, 38, 0.75);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid rgba(30, 47, 77, 0.6);
+}
+
+.hud-glass-interactive {
+  background: rgba(14, 22, 38, 0.75);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid rgba(30, 47, 77, 0.6);
+  transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.hud-glass-interactive:hover {
+  background: rgba(19, 29, 49, 0.9);
+  border-color: rgba(16, 185, 129, 0.5);
+  box-shadow: 0 0 25px rgba(16, 185, 129, 0.12);
+  transform: translateY(-2px);
+}
+
+.hud-glow-emerald {
+  box-shadow: 0 0 20px rgba(16, 185, 129, 0.2);
+}
+
+.hud-glow-cyan {
+  box-shadow: 0 0 20px rgba(6, 182, 212, 0.2);
+}
+
+.hud-glow-amber {
+  box-shadow: 0 0 20px rgba(245, 158, 11, 0.2);
+}
+
+.hud-grid-pattern {
+  background-image: radial-gradient(rgba(30, 47, 77, 0.4) 1px, transparent 1px);
+  background-size: 24px 24px;
+}
+
+/* Radar Animation Sweep */
+.radar-grid {
+  position: relative;
+  background-image: 
+    radial-gradient(circle, rgba(6, 182, 212, 0.15) 1px, transparent 1px),
+    radial-gradient(circle, transparent 40%, rgba(6, 182, 212, 0.05) 41%, transparent 42%),
+    radial-gradient(circle, transparent 70%, rgba(6, 182, 212, 0.05) 71%, transparent 72%);
+  background-size: 20px 20px, 100% 100%, 100% 100%;
+}

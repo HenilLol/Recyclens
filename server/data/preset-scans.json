@@ -1,0 +1,82 @@
+[
+  {
+    "id": "preset-pet-bottles",
+    "title": "Clear PET Beverage Bottles",
+    "subtitle": "Post-consumer drinking water & soft drink bottles with caps",
+    "category": "PLASTIC",
+    "image_url": "https://images.unsplash.com/photo-1595278069441-2cf29f8005a4?auto=format&fit=crop&w=800&q=80",
+    "default_weight_kg": 12.5,
+    "location": {
+      "lat": 19.076,
+      "lng": 72.8777,
+      "label": "Bandra West, Mumbai"
+    },
+    "description": "Batch of approximately 25-30 uncompressed transparent PET bottles. Minor liquid droplets inside with detached polypropylene screw caps.",
+    "expected_material": "PLASTIC_PET",
+    "expected_contamination": "LOW (8-12% caps & label residue)"
+  },
+  {
+    "id": "preset-cardboard-pizza",
+    "title": "Contaminated Cardboard Packaging",
+    "subtitle": "Corrugated OCC shipping carton + food delivery pizza box",
+    "category": "PAPER",
+    "image_url": "https://images.unsplash.com/photo-1530587191325-3db32d826c18?auto=format&fit=crop&w=800&q=80",
+    "default_weight_kg": 18.0,
+    "location": {
+      "lat": 19.1136,
+      "lng": 72.8697,
+      "label": "Andheri East, Mumbai"
+    },
+    "description": "Corrugated kraft box mixed with a greasy takeout pizza box, BOPP plastic shipping tape, and thermal paper courier sticker.",
+    "expected_material": "PAPER_CARDBOARD",
+    "expected_contamination": "MODERATE-HIGH (28% grease, food oil & tape)"
+  },
+  {
+    "id": "preset-alu-cans",
+    "title": "Crushed Aluminium UBC Cans",
+    "subtitle": "High-purity post-consumer beverage and soda cans",
+    "category": "METAL",
+    "image_url": "https://images.unsplash.com/photo-1558618666-fcd25c85cd64?auto=format&fit=crop&w=800&q=80",
+    "default_weight_kg": 6.5,
+    "location": {
+      "lat": 19.0176,
+      "lng": 72.8561,
+      "label": "Dadar, Mumbai"
+    },
+    "description": "Collection of flattened 330ml/500ml aluminium beverage cans. Dry, minimal dust, no liquid pooling. Excellent metallurgical purity.",
+    "expected_material": "METAL_ALUMINIUM",
+    "expected_contamination": "CLEAN (<5% exterior ink varnish)"
+  },
+  {
+    "id": "preset-ewaste-pcb",
+    "title": "E-Waste Motherboard Scrap",
+    "subtitle": "Populated FR4 printed circuit boards & ribbon cables",
+    "category": "EWASTE",
+    "image_url": "https://images.unsplash.com/photo-1518770660439-4636190af475?auto=format&fit=crop&w=800&q=80",
+    "default_weight_kg": 3.2,
+    "location": {
+      "lat": 19.0728,
+      "lng": 72.9008,
+      "label": "Kurla West, Mumbai"
+    },
+    "description": "Decommissioned desktop computer motherboards with gold-plated connector pins, copper heat sink brackets, and electrolytic capacitors.",
+    "expected_material": "EWASTE_PCB",
+    "expected_contamination": "MODERATE (Dust & aluminum shielding)"
+  },
+  {
+    "id": "preset-hdpe-containers",
+    "title": "HDPE Rigid Detergent & Milk Jugs",
+    "subtitle": "Unpigmented and colored opaque blow-molded bottles",
+    "category": "PLASTIC",
+    "image_url": "https://images.unsplash.com/photo-1526951521990-620dc14c214b?auto=format&fit=crop&w=800&q=80",
+    "default_weight_kg": 14.0,
+    "location": {
+      "lat": 19.1726,
+      "lng": 72.8426,
+      "label": "Malad West, Mumbai"
+    },
+    "description": "Sturdy HDPE bottles with handles. Rinsed with paper labels remaining on surface.",
+    "expected_material": "PLASTIC_HDPE",
+    "expected_contamination": "LOW (10% paper labels)"
+  }
+]
