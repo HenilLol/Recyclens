@@ -136,10 +136,16 @@ export const useRecyclensStore = create<RecyclensState>((set, get) => ({
 
   runAnalysis: async (overrideImage, overridePresetId) => {
     const { currentImage, selectedPreset, weightKg, userLocation } = get();
-    const imageToAnalyze = overrideImage || currentImage;
     const presetIdToAnalyze = overridePresetId || selectedPreset?.id;
 
-    if (!imageToAnalyze && !presetIdToAnalyze) {
+    // Separate UI preview image from API image payload:
+    // When analyzing a preset demo, the preset's external HTTP image URL is used for UI preview only,
+    // and must NOT be sent to the API. Real user uploads/camera captures produce a base64 data URI.
+    const candidateImage = overrideImage || currentImage;
+    const isBase64Image = typeof candidateImage === 'string' && candidateImage.startsWith('data:image/');
+    const imageToAnalyze = !presetIdToAnalyze && isBase64Image ? candidateImage : undefined;
+
+    if (!imageToAnalyze && !presetIdToAnalyze && !currentImage) {
       set({ error: 'Please upload an image or choose a demo preset to begin scanning.' });
       return;
     }
@@ -154,7 +160,7 @@ export const useRecyclensStore = create<RecyclensState>((set, get) => ({
       setTimeout(() => set({ analysisStage: 'Evaluating Recycler Route Eligibility & Compatibility...' }), 1500);
 
       const result = await analyzeWasteScan({
-        image: imageToAnalyze || undefined,
+        image: imageToAnalyze,
         preset_id: presetIdToAnalyze || undefined,
         weight_kg: weightKg,
         location: userLocation,

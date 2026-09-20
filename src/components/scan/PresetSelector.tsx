@@ -12,7 +12,7 @@ export const PresetSelector: React.FC = () => {
   const handleInstantDemo = (preset: PresetScenario, e: React.MouseEvent) => {
     e.stopPropagation();
     selectPreset(preset);
-    runAnalysis(preset.image_url, preset.id);
+    runAnalysis(undefined, preset.id);
   };
 
   return (

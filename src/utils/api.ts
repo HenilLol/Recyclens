@@ -48,10 +48,16 @@ export async function analyzeWasteScan(payload: {
   preset_id?: string;
   material_hint?: string;
 }): Promise<ScanAnalysisResponse> {
+  // Defense-in-depth: if preset_id is specified, ensure external preview URLs are not sent as raw image payload
+  const sanitizedPayload = { ...payload };
+  if (sanitizedPayload.preset_id && sanitizedPayload.image && !sanitizedPayload.image.startsWith('data:image/')) {
+    delete sanitizedPayload.image;
+  }
+
   const res = await fetch(`${API_BASE}/scan/analyze`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(payload),
+    body: JSON.stringify(sanitizedPayload),
   });
 
   if (!res.ok) {
